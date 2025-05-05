@@ -1,0 +1,7 @@
+env: "local"
+dsn: "host=localhost user=gorm password=gorm dbname=shortener port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+http_server:
+  address: "localhost:8080"
+  iddle_timeout: 60
+  read_timeout: 60
+  timeout: 60
