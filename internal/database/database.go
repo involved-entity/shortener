@@ -2,6 +2,7 @@ package database
 
 import (
 	"log"
+	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -9,21 +10,20 @@ import (
 
 var db *gorm.DB
 
-func Init(dsn string) error {
+func Init(dsn string) {
 	con, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Printf("Failed to connect to database: %v", err)
-		return err
+		os.Exit(1)
 	}
 	con.AutoMigrate(&URL{}, &Click{})
 	db = con
-
-	return nil
 }
 
 func GetDB() *gorm.DB {
 	if db == nil {
 		log.Fatal("Database not initialized")
+		os.Exit(1)
 	}
 	return db
 }
