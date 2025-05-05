@@ -22,3 +22,12 @@ func GetURL(db *gorm.DB, shortCode string) (string, error) {
 	}
 	return url.OriginalURL, nil
 }
+
+func DeleteURL(db *gorm.DB, shortCode string) error {
+	var url URL
+	if err := db.Where("short_code = ?", shortCode).Delete(&url).Error; err != nil {
+		log.Println("Error when deleting a url", shortCode)
+		return err
+	}
+	return nil
+}
