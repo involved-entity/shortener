@@ -3,6 +3,8 @@ package main
 import (
 	"shortener/internal"
 	"shortener/internal/database"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -16,4 +18,7 @@ func main() {
 	connection := database.GetDB()
 
 	log.Info("Database connection", "connection", connection)
+
+	router := chi.NewRouter()
+	_ = router
 }
