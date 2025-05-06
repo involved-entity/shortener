@@ -36,3 +36,13 @@ func GetURL(c echo.Context) error {
 	}
 	return c.Redirect(http.StatusPermanentRedirect, url)
 }
+
+func DeleteURL(c echo.Context) error {
+	shortCode := c.Param("shortCode")
+	db := database.GetDB()
+	err := database.DeleteURL(db, shortCode)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
+	}
+	return c.NoContent(http.StatusNoContent)
+}
