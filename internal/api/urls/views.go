@@ -20,8 +20,9 @@ func SaveURL(c echo.Context) error {
 		return err
 	}
 	db := database.GetDB()
-	if err := database.SaveURL(db, dto.OriginalURL, dto.ShortCode); err != nil {
+	url, err := database.SaveURL(db, dto.OriginalURL, dto.ShortCode)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode already used"})
 	}
-	return c.JSON(http.StatusOK, api.Response{Msg: "success"})
+	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: url})
 }

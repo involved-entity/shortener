@@ -6,13 +6,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func SaveURL(db *gorm.DB, originalURL string, shortCode string) error {
+func SaveURL(db *gorm.DB, originalURL string, shortCode string) (URL, error) {
 	url := URL{OriginalURL: originalURL, ShortCode: shortCode}
 	if err := db.Create(&url).Error; err != nil {
 		log.Println("Error when saving a url", originalURL, shortCode)
-		return err
+		return URL{}, err
 	}
-	return nil
+	return url, nil
 }
 
 func GetURL(db *gorm.DB, shortCode string) (string, error) {
