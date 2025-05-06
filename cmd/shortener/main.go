@@ -3,6 +3,7 @@ package main
 import (
 	"shortener/internal"
 	"shortener/internal/api/urls"
+	"shortener/internal/api/users"
 	"shortener/internal/database"
 
 	"github.com/labstack/echo/v4"
@@ -23,6 +24,8 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
+
+	e.POST("/api/register", users.Register)
 
 	e.GET("/_/:shortCode", urls.GetURL)
 	e.POST("/api/urls", urls.SaveURL)
