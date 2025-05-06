@@ -15,19 +15,28 @@ func SaveURL(db *gorm.DB, originalURL string, shortCode string) (URL, error) {
 	return url, nil
 }
 
-func GetURL(db *gorm.DB, shortCode string) (string, error) {
+func GetURL(db *gorm.DB, shortCode string) (string, uint, error) {
 	var url URL
 	if err := db.Where("short_code = ?", shortCode).First(&url).Error; err != nil {
 		log.Println("Error when get a url", shortCode)
-		return "", err
+		return "", 0, err
 	}
-	return url.OriginalURL, nil
+	return url.OriginalURL, url.ID, nil
 }
 
 func DeleteURL(db *gorm.DB, shortCode string) error {
 	var url URL
 	if err := db.Where("short_code = ?", shortCode).Delete(&url).Error; err != nil {
 		log.Println("Error when deleting a url", shortCode)
+		return err
+	}
+	return nil
+}
+
+func RegisterClick(db *gorm.DB, id uint, ip string) error {
+	click := Click{URLID: id, IPAddress: ip}
+	if err := db.Create(&click).Error; err != nil {
+		log.Println("Error when register a click", click)
 		return err
 	}
 	return nil

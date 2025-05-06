@@ -30,10 +30,11 @@ func SaveURL(c echo.Context) error {
 func GetURL(c echo.Context) error {
 	shortCode := c.Param("shortCode")
 	db := database.GetDB()
-	url, err := database.GetURL(db, shortCode)
+	url, id, err := database.GetURL(db, shortCode)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "shortcode is not defined")
 	}
+	database.RegisterClick(db, id, c.RealIP())
 	return c.Redirect(http.StatusPermanentRedirect, url)
 }
 
