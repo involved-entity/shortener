@@ -3,10 +3,6 @@ package main
 import (
 	"shortener/internal"
 	"shortener/internal/database"
-	customMW "shortener/internal/middleware"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -20,11 +16,4 @@ func main() {
 	connection := database.GetDB()
 
 	log.Info("Database connection", "connection", connection)
-
-	router := chi.NewRouter()
-	router.Use(middleware.RealIP)
-	router.Use(middleware.RequestID)
-	router.Use(customMW.NewLogMiddleware(log))
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.URLFormat)
 }
