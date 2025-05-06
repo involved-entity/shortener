@@ -11,6 +11,7 @@ type Config struct {
 	Env        string `yaml:"env" env:"ENV" env-default:"local"`
 	DSN        string `yaml:"dsn" env:"DSN"`
 	HTTPServer `yaml:"http_server"`
+	JWT        `yaml:"jwt"`
 }
 
 type HTTPServer struct {
@@ -18,6 +19,11 @@ type HTTPServer struct {
 	IddleTimeout int    `yaml:"iddle_timeout" env:"IDDLE_TIMEOUT" env-default:"60"`
 	ReadTimeout  int    `yaml:"read_timeout" env:"READ_TIMEOUT" env-default:"60"`
 	Timeout      int    `yaml:"timeout" env:"TIMEOUT" env-default:"60"`
+}
+
+type JWT struct {
+	TTL    int    `yaml:"ttl" env:"TTL" env-default:"60"`
+	SECRET string `yaml:"secret" env:"SECRET"`
 }
 
 func MustLoad() Config {
