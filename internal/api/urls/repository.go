@@ -45,7 +45,7 @@ func (r Repository) GetURL(shortCode string) (string, uint, error) {
 
 func (r Repository) DeleteURL(shortCode string) error {
 	var url database.URL
-	if err := r.db.Where("short_code = ?", shortCode).Delete(&url).Error; err != nil {
+	if err := r.db.Where("short_code = ?", shortCode).Where("user_id = ?", r.UserId).Delete(&url).Error; err != nil {
 		log.Println("Error when deleting a url", shortCode)
 		return err
 	}
