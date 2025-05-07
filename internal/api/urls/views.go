@@ -4,6 +4,7 @@ import (
 	"shortener/internal/api"
 	"shortener/internal/database"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
 	"net/http"
@@ -15,12 +16,19 @@ type URLDTO struct {
 }
 
 func SaveURL(c echo.Context) error {
+	var userID int
+
+	if c.Get("user") != nil {
+		idValue := c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"]
+		userID = int(idValue.(float64))
+	}
+
 	dto := URLDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
 		return err
 	}
 	db := database.GetDB()
-	r := Repository{db: db}
+	r := Repository{db: db, UserId: userID}
 	url, err := r.SaveURL(dto.OriginalURL, dto.ShortCode)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode already used"})
@@ -41,6 +49,8 @@ func GetURL(c echo.Context) error {
 }
 
 func DeleteURL(c echo.Context) error {
+	// user := c.Get("user").(*jwt.Token)
+	// claims := user.Claims.(jwt.MapClaims)
 	shortCode := c.Param("shortCode")
 	db := database.GetDB()
 	r := Repository{db: db}
