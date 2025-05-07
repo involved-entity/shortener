@@ -17,7 +17,6 @@ func main() {
 	log := internal.SetupLogger(config.Env)
 
 	log.Info("Starting shortener service", "env", config.Env)
-	log.Info("HTTP server address", "address", config.HTTPServer.Address)
 
 	database.Init(config.DSN)
 	connection := database.GetDB()
@@ -33,7 +32,7 @@ func main() {
 	e.GET("/_/:shortCode", urls.GetURL)
 
 	authProtected := e.Group("")
-	authProtected.Use(echojwt.WithConfig(echojwt.Config{SigningKey: config.SECRET, Skipper: api.OptionalJWT(
+	authProtected.Use(echojwt.WithConfig(echojwt.Config{SigningKey: []byte(config.SECRET), Skipper: api.OptionalJWT(
 		[]string{"/api/urls"},
 	)}))
 
