@@ -66,7 +66,11 @@ func Login(ttl int, secret string) func(c echo.Context) error {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub": user.Username,
+			"sub": map[string]any{
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+			},
 			"exp": time.Now().Add(time.Minute * time.Duration(ttl)).Unix(),
 		})
 
