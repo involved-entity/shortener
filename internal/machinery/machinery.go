@@ -15,7 +15,7 @@ func Init() {
 
 func GetServer() *machinery.Server {
 	if server == nil {
-		log.Fatal("Database not initialized")
+		log.Fatal("Machinery server not initialized")
 		os.Exit(1)
 	}
 	return server
