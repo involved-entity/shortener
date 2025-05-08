@@ -2,12 +2,12 @@ package main
 
 import (
 	"log"
-	"shortener/internal"
+	conf "shortener/internal/config"
 	"shortener/internal/machinery"
 )
 
 func main() {
-	config := internal.MustLoad()
+	config := conf.MustLoad()
 	server := machinery.New(config.Mail.Email, config.Mail.Password)
 	worker := server.NewWorker("email_worker", 10)
 	err := worker.Launch()

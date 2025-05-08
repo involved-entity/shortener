@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	api "shortener/internal/api"
+	conf "shortener/internal/config"
 	"shortener/internal/database"
 	"shortener/internal/redis"
 	"strconv"
@@ -71,40 +72,40 @@ func Register(c echo.Context) error {
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
 }
 
-func Login(ttl int, secret string) func(c echo.Context) error {
-	return func(c echo.Context) error {
-		dto := UserLoginDTO{}
-		if err := api.DecodeRequest(c, &dto); err != nil {
-			return err
-		}
-
-		db := database.GetDB()
-		r := Repository{db: db}
-		user, err := r.GetUser(dto.Username)
-		if err != nil {
-			return c.JSON(http.StatusUnauthorized, api.Response{Msg: "User is not found or not verified"})
-		}
-
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
-			return c.JSON(http.StatusUnauthorized, "Invalid credentials")
-		}
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub": JWTData{
-				ID:       user.ID,
-				Username: user.Username,
-				Email:    user.Email,
-			},
-			"exp": time.Now().Add(time.Minute * time.Duration(ttl)).Unix(),
-		})
-
-		tokenString, err := token.SignedString([]byte(secret))
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "Could not generate token")
-		}
-
-		return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: TokenDTO{Token: tokenString}})
+func Login(c echo.Context) error {
+	dto := UserLoginDTO{}
+	if err := api.DecodeRequest(c, &dto); err != nil {
+		return err
 	}
+
+	db := database.GetDB()
+	r := Repository{db: db}
+	user, err := r.GetUser(dto.Username)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, api.Response{Msg: "User is not found or not verified"})
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
+		return c.JSON(http.StatusUnauthorized, "Invalid credentials")
+	}
+
+	config := conf.GetConfig()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": JWTData{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+		},
+		"exp": time.Now().Add(time.Minute * time.Duration(config.JWT.JWT_TTL)).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(config.JWT.SECRET))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Could not generate token")
+	}
+
+	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: TokenDTO{Token: tokenString}})
 }
 
 func RegenerateCode(c echo.Context) error {
@@ -125,10 +126,9 @@ func ActivateAccount(c echo.Context) error {
 	}
 
 	redisClient := redis.GetClient()
-	otp, err := redisClient.Get(context.Background(), "otp:"+strconv.Itoa(dto.ID)).Result()
+	config := conf.GetConfig()
+	otp, err := redisClient.Get(context.Background(), config.OTP.RedisName+":"+strconv.Itoa(dto.ID)).Result()
 	if err != nil {
-		log.Println(otp)
-		log.Printf("Error with redis: %T", err)
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Code expired"})
 	}
 

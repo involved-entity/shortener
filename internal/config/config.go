@@ -14,6 +14,7 @@ type Config struct {
 	HTTPServer `yaml:"http_server"`
 	JWT        `yaml:"jwt"`
 	Mail       `yaml:"mail"`
+	OTP        `yaml:"otp"`
 }
 
 type HTTPServer struct {
@@ -24,13 +25,18 @@ type HTTPServer struct {
 }
 
 type JWT struct {
-	TTL    int    `yaml:"ttl" env:"TTL" env-default:"60"`
-	SECRET string `yaml:"secret" env:"SECRET"`
+	JWT_TTL int    `yaml:"ttl" env:"TTL" env-default:"60"`
+	SECRET  string `yaml:"secret" env:"SECRET"`
 }
 
 type Mail struct {
 	Email    string `yaml:"email" env:"MAIL_EMAIL"`
 	Password string `yaml:"password" env:"MAIL_PASSWORD"`
+}
+
+type OTP struct {
+	RedisName string `yaml:"redis_name" env:"OTP_REDIS_NAME"`
+	OTP_TTL   int    `yaml:"ttl" env:"OTP_TTL"`
 }
 
 var config *Config

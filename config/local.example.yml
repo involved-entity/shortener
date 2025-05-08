@@ -11,3 +11,6 @@ jwt:
 mail:
   email: "some@gmail.com"
   password: "..."
+otp:
+  redis_name: "otp"
+  ttl: 5
