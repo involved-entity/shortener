@@ -9,8 +9,8 @@ import (
 
 var server *machinery.Server
 
-func Init() {
-	server = New()
+func Init(configEmail string, configPassword string) {
+	server = New(configEmail, configPassword)
 }
 
 func GetServer() *machinery.Server {

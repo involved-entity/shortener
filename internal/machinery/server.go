@@ -13,7 +13,7 @@ import (
 	"log"
 )
 
-func New() *machinery.Server {
+func New(configEmail string, configPassword string) *machinery.Server {
 	cnf := &config.Config{
 		DefaultQueue:    "tasks",
 		ResultsExpireIn: 3600,
@@ -33,7 +33,7 @@ func New() *machinery.Server {
 
 	server := machinery.NewServer(cnf, broker, backend, lock)
 
-	err := server.RegisterTask("send_email", tasks.SendVerificationEmail)
+	err := server.RegisterTask("send_email", tasks.SendVerificationEmail(configEmail, configPassword))
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)

@@ -1,10 +1,13 @@
 env: "local"
 dsn: "host=localhost user=gorm password=gorm dbname=shortener port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 http_server:
-  address: "localhost:8080"
+  address: "localhost:8000"
   iddle_timeout: 60
   read_timeout: 60
   timeout: 60
 jwt:
   ttl: 60
   secret: "c6bb0f46ecc497156578ffea1121004ca9b26f85f5f1bcf9527a944923bb8104"
+mail:
+  email: "some@gmail.com"
+  password: "..."

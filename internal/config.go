@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"log"
 	"os"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -12,6 +13,7 @@ type Config struct {
 	DSN        string `yaml:"dsn" env:"DSN"`
 	HTTPServer `yaml:"http_server"`
 	JWT        `yaml:"jwt"`
+	Mail       `yaml:"mail"`
 }
 
 type HTTPServer struct {
@@ -26,7 +28,14 @@ type JWT struct {
 	SECRET string `yaml:"secret" env:"SECRET"`
 }
 
-func MustLoad() Config {
+type Mail struct {
+	Email    string `yaml:"email" env:"MAIL_EMAIL"`
+	Password string `yaml:"password" env:"MAIL_PASSWORD"`
+}
+
+var config *Config
+
+func MustLoad() *Config {
 	configPath := os.Getenv("CONFIG_PATH")
 
 	if configPath == "" {
@@ -45,12 +54,21 @@ func MustLoad() Config {
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 
-	var config Config
-	if err := viper.Unmarshal(&config, func(c *mapstructure.DecoderConfig) {
+	var cfg Config
+	if err := viper.Unmarshal(&cfg, func(c *mapstructure.DecoderConfig) {
 		c.TagName = "yaml"
 	}); err != nil {
 		panic("failed to unmarshal config: " + err.Error())
 	}
 
+	config = &cfg
+
+	return config
+}
+
+func GetConfig() *Config {
+	if config == nil {
+		log.Println("config is not loaded")
+	}
 	return config
 }
