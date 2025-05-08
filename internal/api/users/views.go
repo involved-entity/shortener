@@ -6,12 +6,10 @@ import (
 	"net/http"
 	api "shortener/internal/api"
 	"shortener/internal/database"
-	"shortener/internal/machinery"
 	"shortener/internal/redis"
 	"strconv"
 	"time"
 
-	machineryTasks "github.com/RichardKnop/machinery/v2/tasks"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -38,6 +36,11 @@ type JWTData struct {
 	Email    string `json:"email"`
 }
 
+type RegenerateCodeDTO struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+}
+
 type VerificationDTO struct {
 	ID   int    `json:"id"`
 	Code string `json:"code"`
@@ -61,25 +64,9 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Username or email is already exists"})
 	}
 
-	tokenOTP, err := GenerateSecureToken()
-	if err != nil {
-		return c.JSON(
-			http.StatusInternalServerError,
-			api.Response{Msg: "Failed to generate token to verification. Please try again"},
-		)
+	if err := CreateAndSendToken(c, user.ID, user.Email); err != nil {
+		return err
 	}
-	redisClient := redis.GetClient()
-	redisClient.Set(context.Background(), "otp:"+strconv.Itoa(int(user.ID)), tokenOTP, time.Minute*5)
-
-	machineryServer := machinery.GetServer()
-	signature := &machineryTasks.Signature{
-		Name: "send_email",
-		Args: []machineryTasks.Arg{
-			{Name: "email", Type: "string", Value: user.Email},
-			{Name: "code", Type: "string", Value: tokenOTP},
-		},
-	}
-	machineryServer.SendTaskWithContext(context.Background(), signature)
 
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
 }
@@ -120,6 +107,17 @@ func Login(ttl int, secret string) func(c echo.Context) error {
 	}
 }
 
+func RegenerateCode(c echo.Context) error {
+	dto := RegenerateCodeDTO{}
+	if err := api.DecodeRequest(c, &dto); err != nil {
+		return err
+	}
+	if err := CreateAndSendToken(c, uint(dto.ID), dto.Email); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, api.Response{Msg: "success"})
+}
+
 func ActivateAccount(c echo.Context) error {
 	dto := VerificationDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
@@ -127,7 +125,7 @@ func ActivateAccount(c echo.Context) error {
 	}
 
 	redisClient := redis.GetClient()
-	otp, err := redisClient.Get(context.Background(), "code:"+strconv.Itoa(dto.ID)).Result()
+	otp, err := redisClient.Get(context.Background(), "otp:"+strconv.Itoa(dto.ID)).Result()
 	if err != nil {
 		log.Println(otp)
 		log.Printf("Error with redis: %T", err)
