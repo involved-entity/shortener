@@ -5,6 +5,7 @@ import (
 	"shortener/internal/api/urls"
 	"shortener/internal/api/users"
 	"shortener/internal/database"
+	"shortener/internal/machinery"
 
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -17,6 +18,7 @@ func Run(config Config) {
 	log.Info("Starting shortener service", "env", config.Env)
 
 	database.Init(config.DSN)
+	machinery.Init()
 
 	e := echo.New()
 	e.Use(middleware.Logger())
