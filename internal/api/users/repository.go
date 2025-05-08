@@ -32,3 +32,17 @@ func (r Repository) GetUser(username string) (database.User, error) {
 	}
 	return user, nil
 }
+
+func (r Repository) VerificateUser(id int) error {
+	var user database.User
+	if err := r.db.Where("id = ?", id).First(&user).Error; err != nil {
+		log.Println("Error when get a user", id, err)
+		return err
+	}
+	user.IsVerified = true
+	if err := r.db.Save(&user).Error; err != nil {
+		log.Println("Error when save user verified status", err)
+		return err
+	}
+	return nil
+}

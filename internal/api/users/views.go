@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"log"
 	"net/http"
 	api "shortener/internal/api"
 	"shortener/internal/database"
@@ -35,6 +36,11 @@ type JWTData struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
+}
+
+type VerificationDTO struct {
+	ID   int    `json:"id"`
+	Code string `json:"code"`
 }
 
 func Register(c echo.Context) error {
@@ -112,4 +118,32 @@ func Login(ttl int, secret string) func(c echo.Context) error {
 
 		return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: TokenDTO{Token: tokenString}})
 	}
+}
+
+func ActivateAccount(c echo.Context) error {
+	dto := VerificationDTO{}
+	if err := api.DecodeRequest(c, &dto); err != nil {
+		return err
+	}
+
+	redisClient := redis.GetClient()
+	otp, err := redisClient.Get(context.Background(), "code:"+strconv.Itoa(dto.ID)).Result()
+	if err != nil {
+		log.Println(otp)
+		log.Printf("Error with redis: %T", err)
+		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Code expired"})
+	}
+
+	if otp != dto.Code {
+		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Invalid code"})
+	}
+
+	db := database.GetDB()
+	r := Repository{db: db}
+	if err := r.VerificateUser(dto.ID); err != nil {
+		log.Println("Error with database", err)
+		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+	}
+
+	return c.JSON(http.StatusAccepted, api.Response{Msg: "success"})
 }
