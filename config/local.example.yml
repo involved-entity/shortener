@@ -14,3 +14,7 @@ mail:
 otp:
   redis_name: "otp"
   ttl: 5
+reset_token:
+  redis_name: "rt"
+  ttl: 5
+  frontend_url: "http://localhost:3000/reset-password"

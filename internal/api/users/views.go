@@ -47,6 +47,10 @@ type VerificationDTO struct {
 	Code string `json:"code"`
 }
 
+type ResetPasswordDTO struct {
+	Username string `json:"username"`
+}
+
 func Register(c echo.Context) error {
 	dto := UserDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
@@ -141,6 +145,26 @@ func ActivateAccount(c echo.Context) error {
 	if err := r.VerificateUser(dto.ID); err != nil {
 		log.Println("Error with database", err)
 		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+	}
+
+	return c.JSON(http.StatusAccepted, api.Response{Msg: "success"})
+}
+
+func ResetPassword(c echo.Context) error {
+	dto := ResetPasswordDTO{}
+	if err := api.DecodeRequest(c, &dto); err != nil {
+		return err
+	}
+
+	db := database.GetDB()
+	r := Repository{db: db}
+	user, err := r.GetUser(dto.Username)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, api.Response{Msg: "User not found"})
+	}
+
+	if err := CreateAndSendResetPasswordLink(c, user.ID, user.Email); err != nil {
+		return err
 	}
 
 	return c.JSON(http.StatusAccepted, api.Response{Msg: "success"})

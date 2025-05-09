@@ -15,6 +15,7 @@ type Config struct {
 	JWT        `yaml:"jwt"`
 	Mail       `yaml:"mail"`
 	OTP        `yaml:"otp"`
+	ResetToken `yaml:"reset_token"`
 }
 
 type HTTPServer struct {
@@ -37,6 +38,12 @@ type Mail struct {
 type OTP struct {
 	RedisName string `yaml:"redis_name" env:"OTP_REDIS_NAME"`
 	OTP_TTL   int    `yaml:"ttl" env:"OTP_TTL"`
+}
+
+type ResetToken struct {
+	RedisName   string `yaml:"redis_name" env:"RT_REDIS_NAME"`
+	RT_TTL      int    `yaml:"ttl" env:"RT_TTL"`
+	FrontendUrl string `yaml:"frontend_url" env:"RT_FRONTEND_URL"`
 }
 
 var config *Config
