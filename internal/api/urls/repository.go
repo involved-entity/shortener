@@ -8,13 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type URLRepository interface {
-	SaveURL(originalURL string, shortCode string) (database.URL, error)
-	GetURL(shortCode string) (string, uint, error)
-	DeleteURL(shortCode string) error
-	RegisterClick(id uint, ip int) error
-}
-
 type Repository struct {
 	db     *gorm.DB
 	UserId int
@@ -59,4 +52,13 @@ func (r Repository) RegisterClick(id uint, ip string) error {
 		return err
 	}
 	return nil
+}
+
+func (r Repository) GetUserURLs() ([]database.URL, error) {
+	var urls []database.URL
+	if err := r.db.Model(&database.URL{}).Joins("User").Where("user_id = ?", r.UserId).Find(&urls).Error; err != nil {
+		log.Println("Error when get user urls", err)
+		return urls, err
+	}
+	return urls, nil
 }

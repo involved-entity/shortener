@@ -36,15 +36,15 @@ func Run(config *conf.Config) {
 	e.POST("/api/reset-password", users.ResetPassword)
 	e.POST("/api/reset-password-confirm", users.ResetPasswordConfirm)
 
-	e.GET("/_/:shortCode", urls.GetURL)
-
 	authProtected := e.Group("")
 	authProtected.Use(echojwt.WithConfig(echojwt.Config{SigningKey: []byte(config.SECRET), Skipper: api.OptionalJWT(
 		[]string{"/api/urls"},
 	)}))
 
+	authProtected.GET("/api/urls", urls.GetMyURLs)
 	authProtected.POST("/api/urls", urls.SaveURL)
 	authProtected.DELETE("/api/urls/:shortCode", urls.DeleteURL)
+	e.GET("/_/:shortCode", urls.GetURL)
 
 	e.Start(config.Address)
 }
