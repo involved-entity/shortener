@@ -18,10 +18,13 @@ type URL struct {
 }
 
 type Click struct {
-	ID        uint      `gorm:"primaryKey"`
-	URLID     uint      `gorm:"not null"`
-	URL       URL       `gorm:"foreignKey:URLID;constraint:OnDelete:CASCADE"`
-	IPAddress string    `gorm:"not null"`
+	ID        uint   `gorm:"primaryKey"`
+	URLID     uint   `gorm:"not null"`
+	URL       URL    `gorm:"foreignKey:URLID;constraint:OnDelete:CASCADE"`
+	IPAddress string `gorm:"not null"`
+	Referer   *string
+	LangCode  *string
+	Browser   *string
 	ClickedAt time.Time `gorm:"autoCreateTime"`
 }
 
