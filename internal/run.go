@@ -44,7 +44,10 @@ func Run(config *conf.Config) {
 	authProtected.GET("/api/urls", urls.GetMyURLs)
 	authProtected.POST("/api/urls", urls.SaveURL)
 	authProtected.DELETE("/api/urls/:shortCode", urls.DeleteURL)
+
 	e.GET("/_/:shortCode", urls.GetURL)
+
+	authProtected.GET("/api/clicks/:shortCode", urls.GetURLClicks)
 
 	e.Start(config.Address)
 }

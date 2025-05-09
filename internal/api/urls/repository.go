@@ -62,3 +62,12 @@ func (r Repository) GetUserURLs() ([]database.URL, error) {
 	}
 	return urls, nil
 }
+
+func (r Repository) GetURLClicks(shortCode string) ([]database.Click, error) {
+	var clicks []database.Click
+	if err := r.db.Model(&database.Click{}).Joins("URL").Joins("URL.User").Where(`"URL"."short_code" = ?`, shortCode).Where(`"URL"."user_id" = ?`, r.UserId).Find(&clicks).Error; err != nil {
+		log.Println("Error when get user urls", err)
+		return clicks, err
+	}
+	return clicks, nil
+}

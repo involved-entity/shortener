@@ -88,3 +88,15 @@ func GetMyURLs(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: urls})
 }
+
+func GetURLClicks(c echo.Context) error {
+	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+	shortCode := c.Param("shortCode")
+	db := database.GetDB()
+	r := Repository{db: db, UserId: userID}
+	clicks, err := r.GetURLClicks(shortCode)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+	}
+	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: clicks})
+}
