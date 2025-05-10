@@ -1,7 +1,9 @@
 package urls
 
 import (
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/labstack/echo/v4"
 
@@ -32,4 +34,28 @@ func DecodeClickRequest(c echo.Context) (string, string, string, string) {
 
 func GetUserID(c echo.Context) int {
 	return int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+}
+
+func isDigitsOnly(s string) bool {
+	for _, c := range s {
+		if !unicode.IsDigit(c) {
+			return false
+		}
+	}
+	return true
+}
+
+func stringToIntStrict(s string) int {
+	if s == "" || !isDigitsOnly(s) {
+		return 1
+	}
+	num, err := strconv.Atoi(s)
+	if err != nil {
+		return 1
+	}
+	return num
+}
+
+func GetPage(c echo.Context) int {
+	return stringToIntStrict(c.QueryParam("page"))
 }
