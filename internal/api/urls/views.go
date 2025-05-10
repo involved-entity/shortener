@@ -4,8 +4,6 @@ import (
 	"shortener/internal/api"
 	"shortener/internal/database"
 
-	"strings"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
@@ -29,8 +27,7 @@ func SaveURL(c echo.Context) error {
 	if err := api.DecodeRequest(c, &dto); err != nil {
 		return err
 	}
-	db := database.GetDB()
-	r := Repository{db: db, UserId: userID}
+	r := Repository{db: database.GetDB(), UserId: userID}
 	url, err := r.SaveURL(dto.OriginalURL, dto.ShortCode)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "shortcode already used"})
@@ -39,26 +36,9 @@ func SaveURL(c echo.Context) error {
 }
 
 func GetURL(c echo.Context) error {
-	shortCode := c.Param("shortCode")
+	shortCode, referer, langCode, browser := DecodeClickRequest(c)
 
-	lang := c.Request().Header.Get("Accept-Language")
-	ua := c.Request().UserAgent()
-	referer := c.Request().Header.Get("Referer")
-
-	langParts := strings.Split(lang, ";")
-	langCode := langParts[0]
-
-	uaParts := strings.Split(ua, " ")
-	browser := ""
-	for _, part := range uaParts {
-		if strings.Contains(part, "Chrome") || strings.Contains(part, "Firefox") || strings.Contains(part, "Safari") || strings.Contains(part, "Edge") {
-			browser = part
-			break
-		}
-	}
-
-	db := database.GetDB()
-	r := Repository{db: db}
+	r := Repository{db: database.GetDB()}
 	url, id, err := r.GetURL(shortCode)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
@@ -68,10 +48,9 @@ func GetURL(c echo.Context) error {
 }
 
 func DeleteURL(c echo.Context) error {
-	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+	userID := GetUserID(c)
 	shortCode := c.Param("shortCode")
-	db := database.GetDB()
-	r := Repository{db: db, UserId: userID}
+	r := Repository{db: database.GetDB(), UserId: userID}
 	if err := r.DeleteURL(shortCode); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
 	}
@@ -79,9 +58,8 @@ func DeleteURL(c echo.Context) error {
 }
 
 func GetMyURLs(c echo.Context) error {
-	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
-	db := database.GetDB()
-	r := Repository{db: db, UserId: userID}
+	userID := GetUserID(c)
+	r := Repository{db: database.GetDB(), UserId: userID}
 	urls, err := r.GetUserURLs()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
@@ -90,10 +68,9 @@ func GetMyURLs(c echo.Context) error {
 }
 
 func GetURLClicks(c echo.Context) error {
-	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+	userID := GetUserID(c)
 	shortCode := c.Param("shortCode")
-	db := database.GetDB()
-	r := Repository{db: db, UserId: userID}
+	r := Repository{db: database.GetDB(), UserId: userID}
 	clicks, err := r.GetURLClicks(shortCode)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})

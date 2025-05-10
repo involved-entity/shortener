@@ -21,7 +21,7 @@ func (r Repository) SaveURL(originalURL string, shortCode string) (database.URL,
 	}
 	url := database.URL{OriginalURL: originalURL, ShortCode: shortCode, UserID: userID}
 	if err := r.db.Create(&url).Error; err != nil {
-		log.Println("Error when saving a url", originalURL, shortCode)
+		log.Println("Error when saving a url", originalURL, shortCode, userID)
 		return database.URL{}, err
 	}
 	return url, nil
@@ -39,7 +39,7 @@ func (r Repository) GetURL(shortCode string) (string, uint, error) {
 func (r Repository) DeleteURL(shortCode string) error {
 	var url database.URL
 	if err := r.db.Where("short_code = ?", shortCode).Where("user_id = ?", r.UserId).Delete(&url).Error; err != nil {
-		log.Println("Error when deleting a url", shortCode)
+		log.Println("Error when deleting a url", shortCode, r.UserId)
 		return err
 	}
 	return nil
