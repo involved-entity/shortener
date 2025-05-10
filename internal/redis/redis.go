@@ -14,12 +14,12 @@ var (
 	redisOnce   sync.Once
 )
 
-func Init() {
+func Init(configAddress string, configPassword string, configDB int) {
 	redisOnce.Do(func() {
 		redisClient = redis.NewClient(&redis.Options{
-			Addr:            "172.17.0.1:6379",
-			Password:        "",
-			DB:              0,
+			Addr:            configAddress,
+			Password:        configPassword,
+			DB:              configDB,
 			MaxRetries:      3,
 			DialTimeout:     5 * time.Second,
 			MinRetryBackoff: 300 * time.Millisecond,

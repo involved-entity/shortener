@@ -18,8 +18,8 @@ func Run(config *conf.Config) {
 	log := SetupLogger(config.Env)
 
 	database.Init(config.DSN)
-	machinery.Init(config.Mail.Email, config.Mail.Password)
-	redis.Init()
+	machinery.Init(config.Mail.Email, config.Mail.Password, config.Machinery.Broker, config.Machinery.ResultBackend)
+	redis.Init(config.Redis.Address, config.Redis.Password, config.Redis.DB)
 	redisClient := redis.GetClient()
 
 	defer redisClient.Close()
@@ -52,5 +52,5 @@ func Run(config *conf.Config) {
 
 	authProtected.GET("/api/clicks/:shortCode", urls.GetURLClicks)
 
-	e.Start(config.Address)
+	e.Start(config.HTTPServer.Address)
 }
