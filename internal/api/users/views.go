@@ -14,48 +14,48 @@ import (
 )
 
 type UserDTO struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"required,min=5,max=16"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
 type UserLoginDTO struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"required,min=5,max=16"`
+	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
 type TokenDTO struct {
-	Token string `json:"token"`
+	Token string `json:"token" validate:"required,jwt"`
 }
 
 type JWTData struct {
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	ID       uint   `json:"id" validate:"required,gt=0"`
+	Username string `json:"username" validate:"required,min=5,max=16"`
+	Email    string `json:"email" validate:"required,email"`
 }
 
 type RegenerateCodeDTO struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
+	ID    int    `json:"id" validate:"required,gt=0"`
+	Email string `json:"email" validate:"required,email"`
 }
 
 type VerificationDTO struct {
-	ID   int    `json:"id"`
-	Code string `json:"code"`
+	ID   int    `json:"id" validate:"required,gt=0"`
+	Code string `json:"code" validate:"len=5,required,number"`
 }
 
 type ResetPasswordDTO struct {
-	Username string `json:"username"`
+	Username string `json:"username" validate:"required,min=5,max=16"`
 }
 
 type ResetPasswordConfirmDTO struct {
-	ID       int    `json:"id"`
-	Token    string `json:"token"`
-	Password string `json:"password"`
+	ID       int    `json:"id" validate:"required,gt=0"`
+	Token    string `json:"token" validate:"len=64,required"`
+	Password string `json:"password" validate:"required,min=8,max=64"`
 }
 
 type UpdateAccountDTO struct {
-	Email string `json:"email"`
+	Email string `json:"email" validate:"required,email"`
 }
 
 func Register(c echo.Context) error {
@@ -64,7 +64,7 @@ func Register(c echo.Context) error {
 		return err
 	}
 
-	hashedPassword, err := GetHashedPassword(c, dto.Password)
+	hashedPassword, err := GetHashedPassword(dto.Password)
 	if err != nil {
 		return err
 	}
@@ -73,10 +73,10 @@ func Register(c echo.Context) error {
 	r := Repository{db: db}
 	user, err := r.SaveUser(dto.Username, dto.Email, string(hashedPassword))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Username or email is already exists"})
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "Username or email is already exists"})
 	}
 
-	if err := CreateAndSendToken(c, user.ID, user.Email); err != nil {
+	if err := CreateAndSendToken(user.ID, user.Email); err != nil {
 		return err
 	}
 
@@ -93,11 +93,11 @@ func Login(c echo.Context) error {
 	r := Repository{db: db}
 	user, err := r.GetUser(UserInfo{Username: dto.Username})
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, api.Response{Msg: "User is not found or not verified"})
+		return echo.NewHTTPError(http.StatusUnauthorized, api.Response{Msg: "User is not found or not verified"})
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
-		return c.JSON(http.StatusUnauthorized, "Invalid credentials")
+		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}
 
 	config := conf.GetConfig()
@@ -113,7 +113,7 @@ func Login(c echo.Context) error {
 
 	tokenString, err := token.SignedString([]byte(config.JWT.SECRET))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Could not generate token")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Could not generate token")
 	}
 
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: TokenDTO{Token: tokenString}})
@@ -124,7 +124,7 @@ func RegenerateCode(c echo.Context) error {
 	if err := api.DecodeRequest(c, &dto); err != nil {
 		return err
 	}
-	if err := CreateAndSendToken(c, uint(dto.ID), dto.Email); err != nil {
+	if err := CreateAndSendToken(uint(dto.ID), dto.Email); err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success"})
@@ -137,7 +137,7 @@ func ActivateAccount(c echo.Context) error {
 	}
 
 	config := conf.GetConfig()
-	if err := CheckRedisToken(c, dto.ID, dto.Code, config.OTP.RedisName); err != nil {
+	if err := CheckRedisToken(dto.ID, dto.Code, config.OTP.RedisName); err != nil {
 		return err
 	}
 
@@ -145,7 +145,7 @@ func ActivateAccount(c echo.Context) error {
 	r := Repository{db: db, UserID: dto.ID}
 	if err := r.VerificateUser(); err != nil {
 		log.Println("Error with database", err)
-		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 
 	return c.JSON(http.StatusAccepted, api.Response{Msg: "success"})
@@ -161,10 +161,10 @@ func ResetPassword(c echo.Context) error {
 	r := Repository{db: db}
 	user, err := r.GetUser(UserInfo{Username: dto.Username})
 	if err != nil {
-		c.JSON(http.StatusBadRequest, api.Response{Msg: "User not found"})
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "User not found"})
 	}
 
-	if err := CreateAndSendResetPasswordLink(c, user.ID, user.Email); err != nil {
+	if err := CreateAndSendResetPasswordLink(user.ID, user.Email); err != nil {
 		return err
 	}
 
@@ -178,11 +178,11 @@ func ResetPasswordConfirm(c echo.Context) error {
 	}
 
 	config := conf.GetConfig()
-	if err := CheckRedisToken(c, dto.ID, dto.Token, config.ResetToken.RedisName); err != nil {
+	if err := CheckRedisToken(dto.ID, dto.Token, config.ResetToken.RedisName); err != nil {
 		return err
 	}
 
-	hashedPassword, err := GetHashedPassword(c, dto.Password)
+	hashedPassword, err := GetHashedPassword(dto.Password)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func ResetPasswordConfirm(c echo.Context) error {
 	db := database.GetDB()
 	r := Repository{db: db, UserID: dto.ID}
 	if err := r.ChangeUserPassword(string(hashedPassword)); err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 
 	return c.JSON(http.StatusOK, api.Response{Msg: "success"})
@@ -202,7 +202,7 @@ func GetMe(c echo.Context) error {
 	r := Repository{db: db}
 	user, err := r.GetUser(UserInfo{ID: userID})
 	if err != nil {
-		c.JSON(http.StatusBadRequest, api.Response{Msg: "User not found"})
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "User not found"})
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
 }
@@ -217,7 +217,7 @@ func UpdateAccount(c echo.Context) error {
 	r := Repository{db: db, UserID: userID}
 	user, err := r.UpdateAccount(dto.Email)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
 }

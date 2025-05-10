@@ -36,10 +36,10 @@ func generateSecureToken(elements string, length int) (string, error) {
 	return string(token), nil
 }
 
-func CreateAndSendToken(c echo.Context, id uint, email string) error {
+func CreateAndSendToken(id uint, email string) error {
 	tokenOTP, err := generateSecureToken("0123456789", 5)
 	if err != nil {
-		return c.JSON(
+		return echo.NewHTTPError(
 			http.StatusInternalServerError,
 			api.Response{Msg: "Failed to generate token to verification. Please try again"},
 		)
@@ -66,10 +66,10 @@ func CreateAndSendToken(c echo.Context, id uint, email string) error {
 	return nil
 }
 
-func CreateAndSendResetPasswordLink(c echo.Context, id uint, email string) error {
+func CreateAndSendResetPasswordLink(id uint, email string) error {
 	token, err := generateSecureToken("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 64)
 	if err != nil {
-		return c.JSON(
+		return echo.NewHTTPError(
 			http.StatusInternalServerError,
 			api.Response{Msg: "Failed to generate token to reset password. Please try again"},
 		)
@@ -86,7 +86,7 @@ func CreateAndSendResetPasswordLink(c echo.Context, id uint, email string) error
 
 	baseURL, err := url.Parse(config.ResetToken.FrontendUrl)
 	if err != nil {
-		return c.JSON(
+		return echo.NewHTTPError(
 			http.StatusInternalServerError,
 			api.Response{Msg: "Internal server error. Please try again"},
 		)
@@ -112,23 +112,23 @@ func CreateAndSendResetPasswordLink(c echo.Context, id uint, email string) error
 	return nil
 }
 
-func GetHashedPassword(c echo.Context, password string) ([]byte, error) {
+func GetHashedPassword(password string) ([]byte, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return []byte{}, c.JSON(http.StatusBadRequest, api.Response{Msg: "Cant hash this password"})
+		return []byte{}, echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "Cant hash this password"})
 	}
 	return hashedPassword, nil
 }
 
-func CheckRedisToken(c echo.Context, id int, token string, name string) error {
+func CheckRedisToken(id int, token string, name string) error {
 	redisClient := redis.GetClient()
 	otp, err := redisClient.Get(context.Background(), name+":"+strconv.Itoa(id)).Result()
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Code expired"})
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "Code expired"})
 	}
 
 	if otp != token {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Invalid code"})
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "Invalid code"})
 	}
 	redisClient.Del(context.Background(), name+":"+strconv.Itoa(id))
 	return nil
