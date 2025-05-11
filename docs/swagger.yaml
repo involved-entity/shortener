@@ -1,0 +1,19 @@
+basePath: /
+consumes:
+- application/json
+host: localhost:8000
+info:
+  contact: {}
+  description: This is the simple URL Shortener service.
+  title: URL Shortener
+  version: "1.1"
+paths: {}
+produces:
+- application/json
+securityDefinitions:
+  ApiKeyAuth:
+    description: Access JWT Token
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

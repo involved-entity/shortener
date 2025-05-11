@@ -12,6 +12,8 @@ import (
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 func Run(config *conf.Config) {
@@ -51,6 +53,8 @@ func Run(config *conf.Config) {
 	e.GET("/_/:shortCode", urls.GetURL)
 
 	authProtected.GET("/api/clicks/:shortCode", urls.GetURLClicks)
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	e.Start(config.HTTPServer.Address)
 }
