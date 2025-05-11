@@ -15,6 +15,47 @@
     "host": "localhost:8000",
     "basePath": "/",
     "paths": {
+        "/_/{shortCode}": {
+            "get": {
+                "description": "Возвращает URL по короткому коду",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Получить URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Короткий код URL",
+                        "name": "shortCode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное получение",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/account": {
             "get": {
                 "description": "Возвращает информацию о текущем пользователе",
@@ -69,6 +110,47 @@
                 "responses": {
                     "200": {
                         "description": "Успешное обновление",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/clicks/{shortCode}": {
+            "get": {
+                "description": "Возвращает количество кликов по URL",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Получить количество кликов по URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Короткий код URL",
+                        "name": "shortCode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное получение",
                         "schema": {
                             "$ref": "#/definitions/api.Response"
                         }
@@ -303,6 +385,120 @@
                 }
             }
         },
+        "/api/urls": {
+            "get": {
+                "description": "Возвращает список URL, принадлежащих пользователю",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Получить список URL пользователем",
+                "responses": {
+                    "200": {
+                        "description": "Успешное получение",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Сохраняет URL в базе данных",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Сохранить URL",
+                "parameters": [
+                    {
+                        "description": "URL DTO",
+                        "name": "url",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/urls.URLDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное сохранение",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/urls/{shortCode}": {
+            "delete": {
+                "description": "Удаляет URL из базы данных",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Удалить URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Короткий код URL",
+                        "name": "shortCode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешное удаление",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/verification": {
             "post": {
                 "description": "Подтверждает почту пользователя",
@@ -354,6 +550,23 @@
                 "data": {},
                 "msg": {
                     "type": "string"
+                }
+            }
+        },
+        "urls.URLDTO": {
+            "type": "object",
+            "required": [
+                "originalURL",
+                "shortCode"
+            ],
+            "properties": {
+                "originalURL": {
+                    "type": "string"
+                },
+                "shortCode": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 2
                 }
             }
         },
