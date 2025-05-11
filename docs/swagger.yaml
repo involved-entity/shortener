@@ -1,13 +1,318 @@
 basePath: /
 consumes:
 - application/json
+definitions:
+  api.Response:
+    properties:
+      data: {}
+      msg:
+        type: string
+    type: object
+  users.RegenerateCodeDTO:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+    required:
+    - email
+    - id
+    type: object
+  users.ResetPasswordConfirmDTO:
+    properties:
+      id:
+        type: integer
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - id
+    - password
+    - token
+    type: object
+  users.ResetPasswordDTO:
+    properties:
+      username:
+        maxLength: 16
+        minLength: 5
+        type: string
+    required:
+    - username
+    type: object
+  users.UpdateAccountDTO:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  users.UserDTO:
+    properties:
+      email:
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      username:
+        maxLength: 16
+        minLength: 5
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  users.UserLoginDTO:
+    properties:
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      username:
+        maxLength: 16
+        minLength: 5
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  users.VerificationDTO:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+    required:
+    - code
+    - id
+    type: object
 host: localhost:8000
 info:
   contact: {}
   description: This is the simple URL Shortener service.
   title: URL Shortener
   version: "1.1"
-paths: {}
+paths:
+  /api/account:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о текущем пользователе
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный запрос
+          schema:
+            $ref: '#/definitions/api.Response'
+        "401":
+          description: Неавторизованный запрос
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Получение информации о текущем пользователе
+    patch:
+      consumes:
+      - application/json
+      description: Обновляет информацию о пользователе
+      parameters:
+      - description: Пользователь
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.UpdateAccountDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное обновление
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Обновление аккаунта
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      description: Авторизует пользователя
+      parameters:
+      - description: Пользователь
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.UserLoginDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная авторизация
+          schema:
+            $ref: '#/definitions/api.Response'
+        "401":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Авторизация пользователя
+  /api/regenerate-code:
+    post:
+      consumes:
+      - application/json
+      description: Регенерирует код подтверждения для пользователя
+      parameters:
+      - description: Пользователь
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.RegenerateCodeDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная регенерация
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Регенерация кода подтверждения
+  /api/register:
+    post:
+      consumes:
+      - application/json
+      description: Создает нового пользователя
+      parameters:
+      - description: Пользователь
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.UserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная регистрация
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Регистрация пользователя
+  /api/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Сбрасывает пароль пользователя
+      parameters:
+      - description: Пользователь
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.ResetPasswordDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный сброс пароля
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Сброс пароля
+  /api/reset-password-confirm:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждает сброс пароля пользователя
+      parameters:
+      - description: Пользователь
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.ResetPasswordConfirmDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное подтверждение сброса пароля
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Подтверждение сброса пароля
+  /api/verification:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждает почту пользователя
+      parameters:
+      - description: Пользователь
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.VerificationDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное подтверждение
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Подтверждение почты
 produces:
 - application/json
 securityDefinitions:
