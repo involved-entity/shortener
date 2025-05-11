@@ -24,6 +24,7 @@ type URLDTO struct {
 // @Param url body urls.URLDTO true "URL DTO"
 // @Success 200 {object} api.Response "Успешное сохранение"
 // @Failure 400 {object} api.Response "Некорректные данные"
+// @Failure 400 {object} api.Response "Короткий код занят"
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/urls [post]
 func SaveURL(c echo.Context) error {
@@ -47,12 +48,12 @@ func SaveURL(c echo.Context) error {
 }
 
 // @Summary Получить URL
-// @Description Возвращает URL по короткому коду
+// @Description Редеректит на URL по короткому коду
 // @Accept json
 // @Produce json
 // @Param shortCode path string true "Короткий код URL"
-// @Success 200 {object} api.Response "Успешное получение"
-// @Failure 400 {object} api.Response "Некорректные данные"
+// @Success 308 {object} api.Response "Редирект"
+// @Failure 400 {object} api.Response "Короткий код не найден"
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /_/{shortCode} [get]
 func GetURL(c echo.Context) error {
@@ -74,6 +75,7 @@ func GetURL(c echo.Context) error {
 // @Param shortCode path string true "Короткий код URL"
 // @Success 204 {object} api.Response "Успешное удаление"
 // @Failure 400 {object} api.Response "Некорректные данные"
+// @Failure 400 {object} api.Response "Короткий код не найден"
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/urls/{shortCode} [delete]
 func DeleteURL(c echo.Context) error {
@@ -86,12 +88,11 @@ func DeleteURL(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// @Summary Получить список URL пользователем
+// @Summary Получить список URL пользователя
 // @Description Возвращает список URL, принадлежащих пользователю
 // @Accept json
 // @Produce json
 // @Success 200 {object} api.Response "Успешное получение"
-// @Failure 400 {object} api.Response "Некорректные данные"
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/urls [get]
 func GetMyURLs(c echo.Context) error {
@@ -105,13 +106,12 @@ func GetMyURLs(c echo.Context) error {
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: urls})
 }
 
-// @Summary Получить количество кликов по URL
-// @Description Возвращает количество кликов по URL
+// @Summary Получить клики по URL
+// @Description Возвращает данные о кликах на URL (браузер, IP, язык браузера, источник перехода)
 // @Accept json
 // @Produce json
 // @Param shortCode path string true "Короткий код URL"
 // @Success 200 {object} api.Response "Успешное получение"
-// @Failure 400 {object} api.Response "Некорректные данные"
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/clicks/{shortCode} [get]
 func GetURLClicks(c echo.Context) error {
