@@ -1,0 +1,28 @@
+env: "local"
+dsn: "host=localhost user=gorm password=gorm dbname=shortener_test port=5432 sslmode=disable TimeZone=Europe/Moscow"
+page_size: 1
+http_server:
+  address: "localhost:8000"
+  iddle_timeout: 60
+  read_timeout: 60
+  timeout: 60
+jwt:
+  ttl: 60
+  secret: ""
+mail:
+  email: "something@gmail.com"
+  password: "..."
+otp:
+  redis_name: "otp"
+  ttl: 5
+reset_token:
+  redis_name: "rt"
+  ttl: 5
+  frontend_url: "http://localhost:3000/reset-password"
+machinery:
+  broker: "amqp://guest:guest@localhost:5672/"
+  result_backend: "amqp://guest:guest@localhost:5672/"
+redis:
+  address: "172.17.0.1:6379"
+  password: ""
+  db: 1
