@@ -79,7 +79,7 @@ func GetURL(c echo.Context) error {
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/urls/{shortCode} [delete]
 func DeleteURL(c echo.Context) error {
-	userID := GetUserID(c)
+	userID := api.GetUserID(c)
 	shortCode := c.Param("shortCode")
 	r := Repository{db: database.GetDB(), UserId: userID}
 	if err := r.DeleteURL(shortCode); err != nil {
@@ -96,7 +96,7 @@ func DeleteURL(c echo.Context) error {
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/urls [get]
 func GetMyURLs(c echo.Context) error {
-	userID := GetUserID(c)
+	userID := api.GetUserID(c)
 	page := GetPage(c)
 	r := Repository{db: database.GetDB(), UserId: userID, Page: page}
 	urls, err := r.GetUserURLs()
@@ -115,7 +115,7 @@ func GetMyURLs(c echo.Context) error {
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/clicks/{shortCode} [get]
 func GetURLClicks(c echo.Context) error {
-	userID := GetUserID(c)
+	userID := api.GetUserID(c)
 	shortCode := c.Param("shortCode")
 	page := GetPage(c)
 	r := Repository{db: database.GetDB(), UserId: userID, Page: page}

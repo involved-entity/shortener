@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,7 +17,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -36,8 +36,11 @@ func TestMain(m *testing.M) {
 		"clicks",
 	}
 
-	query := "DROP TABLE " + strings.Join(tables, ", ") + ";"
-	conn.Exec(query)
+	query := "DROP TABLE IF EXISTS " + strings.Join(tables, ", ") + " CASCADE;"
+	err := conn.Exec(query).Error
+	if err != nil {
+		log.Fatalf("Ошибка при очистке базы данных: %v", err)
+	}
 
 	os.Exit(exitCode)
 }
@@ -168,40 +171,32 @@ func TestResetPasswordConfirm(t *testing.T) {
 
 func TestGetMe(t *testing.T) {
 	e := echo.New()
-	config := conf.GetConfig()
 	req := httptest.NewRequest(http.MethodGet, "/api/account", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	parsedToken, err := jwt.Parse(JWT, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.JWT.SECRET), nil
-	})
-	assert.NoError(t, err)
+	parsedToken := testutils.GetJWTForTest(t, JWT)
 
 	c.Set("user", parsedToken)
 
-	err = GetMe(c)
+	err := GetMe(c)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestUpdateAccount(t *testing.T) {
 	e := echo.New()
-	config := conf.GetConfig()
 	req := httptest.NewRequest(http.MethodPatch, "/api/account", bytes.NewBuffer([]byte(`{"email": "newemail@example.com"}`)))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	parsedToken, err := jwt.Parse(JWT, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.JWT.SECRET), nil
-	})
-	assert.NoError(t, err)
+	parsedToken := testutils.GetJWTForTest(t, JWT)
 
 	c.Set("user", parsedToken)
 
-	err = UpdateAccount(c)
+	err := UpdateAccount(c)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 }

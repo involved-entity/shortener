@@ -6,8 +6,6 @@ import (
 	"unicode"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func DecodeClickRequest(c echo.Context) (string, string, string, string) {
@@ -30,10 +28,6 @@ func DecodeClickRequest(c echo.Context) (string, string, string, string) {
 	}
 
 	return shortCode, referer, langCode, browser
-}
-
-func GetUserID(c echo.Context) int {
-	return int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
 }
 
 func isDigitsOnly(s string) bool {
