@@ -1,9 +1,9 @@
 package users
 
 import (
-	"log"
 	"net/http"
 	api "shortener/internal/api"
+	"shortener/internal/api/urls"
 	conf "shortener/internal/config"
 	"shortener/internal/database"
 	"time"
@@ -69,8 +69,7 @@ func Register(c echo.Context) error {
 		return err
 	}
 
-	db := database.GetDB()
-	r := Repository{db: db}
+	r := Repository{db: database.GetDB()}
 	user, err := r.SaveUser(dto.Username, dto.Email, string(hashedPassword))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "Username or email is already exists"})
@@ -89,8 +88,7 @@ func Login(c echo.Context) error {
 		return err
 	}
 
-	db := database.GetDB()
-	r := Repository{db: db}
+	r := Repository{db: database.GetDB()}
 	user, err := r.GetUser(UserInfo{Username: dto.Username})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, api.Response{Msg: "User is not found or not verified"})
@@ -141,10 +139,8 @@ func ActivateAccount(c echo.Context) error {
 		return err
 	}
 
-	db := database.GetDB()
-	r := Repository{db: db, UserID: dto.ID}
+	r := Repository{db: database.GetDB(), UserID: dto.ID}
 	if err := r.VerificateUser(); err != nil {
-		log.Println("Error with database", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 
@@ -157,8 +153,7 @@ func ResetPassword(c echo.Context) error {
 		return err
 	}
 
-	db := database.GetDB()
-	r := Repository{db: db}
+	r := Repository{db: database.GetDB()}
 	user, err := r.GetUser(UserInfo{Username: dto.Username})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "User not found"})
@@ -187,8 +182,7 @@ func ResetPasswordConfirm(c echo.Context) error {
 		return err
 	}
 
-	db := database.GetDB()
-	r := Repository{db: db, UserID: dto.ID}
+	r := Repository{db: database.GetDB(), UserID: dto.ID}
 	if err := r.ChangeUserPassword(string(hashedPassword)); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
@@ -197,9 +191,8 @@ func ResetPasswordConfirm(c echo.Context) error {
 }
 
 func GetMe(c echo.Context) error {
-	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
-	db := database.GetDB()
-	r := Repository{db: db}
+	userID := urls.GetUserID(c)
+	r := Repository{db: database.GetDB()}
 	user, err := r.GetUser(UserInfo{ID: userID})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "User not found"})
@@ -208,13 +201,12 @@ func GetMe(c echo.Context) error {
 }
 
 func UpdateAccount(c echo.Context) error {
-	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+	userID := urls.GetUserID(c)
 	dto := UpdateAccountDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
 		return err
 	}
-	db := database.GetDB()
-	r := Repository{db: db, UserID: userID}
+	r := Repository{db: database.GetDB(), UserID: userID}
 	user, err := r.UpdateAccount(dto.Email)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
