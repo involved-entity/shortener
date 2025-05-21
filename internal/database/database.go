@@ -16,7 +16,7 @@ func Init(dsn string) {
 		log.Printf("Failed to connect to database: %v", err)
 		os.Exit(1)
 	}
-	con.AutoMigrate(&URL{}, &Click{})
+	con.AutoMigrate(&URL{}, &Click{}, &User{})
 	db = con
 }
 
