@@ -3,6 +3,7 @@ package urls
 import (
 	"log"
 
+	conf "shortener/internal/config"
 	"shortener/internal/database"
 
 	"gorm.io/gorm"
@@ -11,6 +12,7 @@ import (
 type Repository struct {
 	db     *gorm.DB
 	UserId int
+	Page   int
 }
 
 func (r Repository) SaveURL(originalURL string, shortCode string) (database.URL, error) {
@@ -56,7 +58,15 @@ func (r Repository) RegisterClick(id uint, ip string, referer string, langCode s
 
 func (r Repository) GetUserURLs() ([]database.URL, error) {
 	var urls []database.URL
-	if err := r.db.Model(&database.URL{}).Joins("User").Where("user_id = ?", r.UserId).Find(&urls).Error; err != nil {
+	limit := conf.GetConfig().PageSize
+	if err := r.db.
+		Model(&database.URL{}).
+		Joins("User").
+		Offset((r.Page-1)*limit).
+		Limit(limit).
+		Where("user_id = ?", r.UserId).
+		Find(&urls).
+		Error; err != nil {
 		log.Println("Error when get user urls", err)
 		return urls, err
 	}
@@ -65,7 +75,17 @@ func (r Repository) GetUserURLs() ([]database.URL, error) {
 
 func (r Repository) GetURLClicks(shortCode string) ([]database.Click, error) {
 	var clicks []database.Click
-	if err := r.db.Model(&database.Click{}).Joins("URL").Joins("URL.User").Where(`"URL"."short_code" = ?`, shortCode).Where(`"URL"."user_id" = ?`, r.UserId).Find(&clicks).Error; err != nil {
+	limit := conf.GetConfig().PageSize
+	if err := r.db.
+		Model(&database.Click{}).
+		Joins("URL").
+		Joins("URL.User").
+		Offset((r.Page-1)*limit).
+		Limit(limit).
+		Where(`"URL"."short_code" = ?`, shortCode).
+		Where(`"URL"."user_id" = ?`, r.UserId).
+		Find(&clicks).
+		Error; err != nil {
 		log.Println("Error when get user urls", err)
 		return clicks, err
 	}

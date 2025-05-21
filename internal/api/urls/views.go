@@ -59,7 +59,8 @@ func DeleteURL(c echo.Context) error {
 
 func GetMyURLs(c echo.Context) error {
 	userID := GetUserID(c)
-	r := Repository{db: database.GetDB(), UserId: userID}
+	page := GetPage(c)
+	r := Repository{db: database.GetDB(), UserId: userID, Page: page}
 	urls, err := r.GetUserURLs()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
@@ -70,7 +71,8 @@ func GetMyURLs(c echo.Context) error {
 func GetURLClicks(c echo.Context) error {
 	userID := GetUserID(c)
 	shortCode := c.Param("shortCode")
-	r := Repository{db: database.GetDB(), UserId: userID}
+	page := GetPage(c)
+	r := Repository{db: database.GetDB(), UserId: userID, Page: page}
 	clicks, err := r.GetURLClicks(shortCode)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})

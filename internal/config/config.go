@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Env        string `yaml:"env" env:"ENV" env-default:"local"`
 	DSN        string `yaml:"dsn" env:"DSN"`
+	PageSize   int    `yaml:"page_size"`
 	HTTPServer `yaml:"http_server"`
 	JWT        `yaml:"jwt"`
 	Mail       `yaml:"mail"`
