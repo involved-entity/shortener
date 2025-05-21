@@ -25,7 +25,8 @@ func main() {
 	e.Use(middleware.Logger())
 
 	e.GET("/_/:shortCode", urls.GetURL)
-	e.POST("/urls", urls.SaveURL)
+	e.POST("/api/urls", urls.SaveURL)
+	e.DELETE("/api/urls/:shortCode", urls.DeleteURL)
 
 	e.Start(config.Address)
 }
