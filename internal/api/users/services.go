@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	machineryTasks "github.com/RichardKnop/machinery/v2/tasks"
 	"github.com/labstack/echo/v4"
 )
@@ -107,5 +109,26 @@ func CreateAndSendResetPasswordLink(c echo.Context, id uint, email string) error
 	}
 	machineryServer.SendTaskWithContext(context.Background(), signature)
 
+	return nil
+}
+
+func GetHashedPassword(c echo.Context, password string) ([]byte, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return []byte{}, c.JSON(http.StatusBadRequest, api.Response{Msg: "Cant hash this password"})
+	}
+	return hashedPassword, nil
+}
+
+func CheckRedisToken(c echo.Context, id int, token string, name string) error {
+	redisClient := redis.GetClient()
+	otp, err := redisClient.Get(context.Background(), name+":"+strconv.Itoa(id)).Result()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Code expired"})
+	}
+
+	if otp != token {
+		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Invalid code"})
+	}
 	return nil
 }

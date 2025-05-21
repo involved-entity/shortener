@@ -46,3 +46,11 @@ func (r Repository) VerificateUser(id int) error {
 	}
 	return nil
 }
+
+func (r Repository) ChangeUserPassword(id int, hashedPassword string) error {
+	if err := r.db.Model(&database.User{}).Where("id = ?", id).Update("password", hashedPassword).Error; err != nil {
+		log.Println("Error when set new password for user", id, err)
+		return err
+	}
+	return nil
+}

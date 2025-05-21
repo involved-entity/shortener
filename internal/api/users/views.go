@@ -1,14 +1,11 @@
 package users
 
 import (
-	"context"
 	"log"
 	"net/http"
 	api "shortener/internal/api"
 	conf "shortener/internal/config"
 	"shortener/internal/database"
-	"shortener/internal/redis"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -51,15 +48,21 @@ type ResetPasswordDTO struct {
 	Username string `json:"username"`
 }
 
+type ResetPasswordConfirmDTO struct {
+	ID       int    `json:"id"`
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
 func Register(c echo.Context) error {
 	dto := UserDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
 		return err
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(dto.Password), bcrypt.DefaultCost)
+	hashedPassword, err := GetHashedPassword(c, dto.Password)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Cant hash this password"})
+		return err
 	}
 
 	db := database.GetDB()
@@ -129,15 +132,9 @@ func ActivateAccount(c echo.Context) error {
 		return err
 	}
 
-	redisClient := redis.GetClient()
 	config := conf.GetConfig()
-	otp, err := redisClient.Get(context.Background(), config.OTP.RedisName+":"+strconv.Itoa(dto.ID)).Result()
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Code expired"})
-	}
-
-	if otp != dto.Code {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Invalid code"})
+	if err := CheckRedisToken(c, dto.ID, dto.Code, config.OTP.RedisName); err != nil {
+		return err
 	}
 
 	db := database.GetDB()
@@ -168,4 +165,29 @@ func ResetPassword(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, api.Response{Msg: "success"})
+}
+
+func ResetPasswordConfirm(c echo.Context) error {
+	dto := ResetPasswordConfirmDTO{}
+	if err := api.DecodeRequest(c, &dto); err != nil {
+		return err
+	}
+
+	config := conf.GetConfig()
+	if err := CheckRedisToken(c, dto.ID, dto.Token, config.ResetToken.RedisName); err != nil {
+		return err
+	}
+
+	hashedPassword, err := GetHashedPassword(c, dto.Password)
+	if err != nil {
+		return err
+	}
+
+	db := database.GetDB()
+	r := Repository{db: db}
+	if err := r.ChangeUserPassword(dto.ID, string(hashedPassword)); err != nil {
+		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+	}
+
+	return c.JSON(http.StatusOK, api.Response{Msg: "success"})
 }
