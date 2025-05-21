@@ -4,6 +4,7 @@ import (
 	"shortener/internal/api"
 	"shortener/internal/api/urls"
 	"shortener/internal/api/users"
+	conf "shortener/internal/config"
 	"shortener/internal/database"
 	"shortener/internal/machinery"
 	"shortener/internal/redis"
@@ -13,7 +14,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func Run(config *Config) {
+func Run(config *conf.Config) {
 	log := SetupLogger(config.Env)
 
 	database.Init(config.DSN)
@@ -29,7 +30,7 @@ func Run(config *Config) {
 	e.Use(middleware.Logger())
 
 	e.POST("/api/register", users.Register)
-	e.POST("/api/login", users.Login(config.TTL, config.SECRET))
+	e.POST("/api/login", users.Login)
 	e.POST("/api/verification", users.ActivateAccount)
 	e.POST("/api/regenerate-code", users.RegenerateCode)
 

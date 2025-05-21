@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"net/http"
 	api "shortener/internal/api"
+	conf "shortener/internal/config"
 	"shortener/internal/machinery"
 	"shortener/internal/redis"
 	"strconv"
@@ -43,7 +44,13 @@ func CreateAndSendToken(c echo.Context, id uint, email string) error {
 		)
 	}
 	redisClient := redis.GetClient()
-	redisClient.Set(context.Background(), "otp:"+strconv.Itoa(int(id)), tokenOTP, time.Minute*5)
+	config := conf.GetConfig()
+	redisClient.Set(
+		context.Background(),
+		config.OTP.RedisName+":"+strconv.Itoa(int(id)),
+		tokenOTP,
+		time.Minute*time.Duration(config.OTP.OTP_TTL),
+	)
 
 	machineryServer := machinery.GetServer()
 	signature := &machineryTasks.Signature{
