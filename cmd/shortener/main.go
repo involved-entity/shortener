@@ -12,8 +12,8 @@ func main() {
 	log.Info("Starting shortener service", "env", config.Env)
 	log.Info("HTTP server address", "address", config.HTTPServer.Address)
 
-	error := database.Init(config.DSN)
+	database.Init(config.DSN)
 	connection := database.GetDB()
 
-	log.Info("Database connection", "connection", connection, "error", error)
+	log.Info("Database connection", "connection", connection)
 }
