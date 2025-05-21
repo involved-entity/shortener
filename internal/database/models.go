@@ -1,10 +1,7 @@
 package database
 
 import (
-	"errors"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type URL struct {
@@ -36,14 +33,4 @@ type User struct {
 	Email      string    `gorm:"uniqueIndex;not null" json:"email"`
 	IsVerified bool      `gorm:"default:false" json:"-"`
 	Urls       []URL     `gorm:"foreignKey:UserID;references:ID" json:"urls,omitempty"`
-}
-
-func (u URL) BeforeCreate(tx *gorm.DB) error {
-	if u.OriginalURL == "" {
-		return errors.New("originalURL cant be empty string")
-	}
-	if u.ShortCode == "" {
-		return errors.New("shortCode cant be empty string")
-	}
-	return nil
 }

@@ -16,6 +16,8 @@ type Config struct {
 	Mail       `yaml:"mail"`
 	OTP        `yaml:"otp"`
 	ResetToken `yaml:"reset_token"`
+	Machinery  `yaml:"machinery"`
+	Redis      `yaml:"redis"`
 }
 
 type HTTPServer struct {
@@ -44,6 +46,17 @@ type ResetToken struct {
 	RedisName   string `yaml:"redis_name" env:"RT_REDIS_NAME"`
 	RT_TTL      int    `yaml:"ttl" env:"RT_TTL"`
 	FrontendUrl string `yaml:"frontend_url" env:"RT_FRONTEND_URL"`
+}
+
+type Machinery struct {
+	Broker        string `yaml:"broker" env:"MACHINERY_BROKER"`
+	ResultBackend string `yaml:"result_backend" env:"MACHINERY_RESULT_BACKEND"`
+}
+
+type Redis struct {
+	Address  string `yaml:"address" env:"REDIS_ADDRESS"`
+	Password string `yaml:"password" env:"REDIS_PASSWORD"`
+	DB       int    `yaml:"db" env:"REDIS_DB"`
 }
 
 var config *Config
@@ -81,7 +94,7 @@ func MustLoad() *Config {
 
 func GetConfig() *Config {
 	if config == nil {
-		log.Println("config is not loaded")
+		log.Fatal("config is not loaded")
 	}
 	return config
 }

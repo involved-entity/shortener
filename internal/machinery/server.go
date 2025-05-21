@@ -13,12 +13,12 @@ import (
 	"log"
 )
 
-func New(configEmail string, configPassword string) *machinery.Server {
+func New(configEmail string, configPassword string, configBroker string, configResultBackend string) *machinery.Server {
 	cnf := &config.Config{
 		DefaultQueue:    "tasks",
 		ResultsExpireIn: 3600,
-		Broker:          "amqp://guest:guest@localhost:5672/",
-		ResultBackend:   "amqp://guest:guest@localhost:5672/",
+		Broker:          configBroker,
+		ResultBackend:   configResultBackend,
 		AMQP: &config.AMQPConfig{
 			Exchange:      "machinery_exchange",
 			ExchangeType:  "direct",
