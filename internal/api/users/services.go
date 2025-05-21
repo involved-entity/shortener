@@ -130,5 +130,6 @@ func CheckRedisToken(c echo.Context, id int, token string, name string) error {
 	if otp != token {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Invalid code"})
 	}
+	redisClient.Del(context.Background(), name+":"+strconv.Itoa(id))
 	return nil
 }
