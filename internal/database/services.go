@@ -11,7 +11,6 @@ func SaveURL(db *gorm.DB, originalURL string, shortCode string) {
 	if err := db.Create(&url); err != nil {
 		log.Println("Error when saving a url", originalURL, shortCode)
 	}
-	log.Println(url.ID)
 }
 
 func GetURL(db *gorm.DB, shortCode string) (string, error) {
