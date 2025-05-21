@@ -1,4 +1,25 @@
 services:
+  shortener:
+    dns: 8.8.8.8
+    build:
+      context: .
+      dockerfile: cmd/shortener/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - postgres
+      - worker
+
+  worker:
+    dns: 8.8.8.8
+    build:
+      context: .
+      dockerfile: cmd/worker/Dockerfile
+    depends_on:
+      - rabbitmq
+      - redis
+
   postgres:
     image: postgres:17-alpine
     container_name: postgres
