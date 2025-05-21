@@ -7,6 +7,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
+	_ "shortener/docs"
+
 	"net/http"
 )
 
@@ -15,6 +17,15 @@ type URLDTO struct {
 	ShortCode   string `json:"shortCode" validate:"required,min=2,max=32"`
 }
 
+// @Summary Сохранить URL
+// @Description Сохраняет URL в базе данных
+// @Accept json
+// @Produce json
+// @Param url body urls.URLDTO true "URL DTO"
+// @Success 200 {object} api.Response "Успешное сохранение"
+// @Failure 400 {object} api.Response "Некорректные данные"
+// @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
+// @Router /api/urls [post]
 func SaveURL(c echo.Context) error {
 	var userID int
 
@@ -35,6 +46,15 @@ func SaveURL(c echo.Context) error {
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: url})
 }
 
+// @Summary Получить URL
+// @Description Возвращает URL по короткому коду
+// @Accept json
+// @Produce json
+// @Param shortCode path string true "Короткий код URL"
+// @Success 200 {object} api.Response "Успешное получение"
+// @Failure 400 {object} api.Response "Некорректные данные"
+// @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
+// @Router /_/{shortCode} [get]
 func GetURL(c echo.Context) error {
 	shortCode, referer, langCode, browser := DecodeClickRequest(c)
 
@@ -47,6 +67,15 @@ func GetURL(c echo.Context) error {
 	return c.Redirect(http.StatusPermanentRedirect, url)
 }
 
+// @Summary Удалить URL
+// @Description Удаляет URL из базы данных
+// @Accept json
+// @Produce json
+// @Param shortCode path string true "Короткий код URL"
+// @Success 204 {object} api.Response "Успешное удаление"
+// @Failure 400 {object} api.Response "Некорректные данные"
+// @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
+// @Router /api/urls/{shortCode} [delete]
 func DeleteURL(c echo.Context) error {
 	userID := GetUserID(c)
 	shortCode := c.Param("shortCode")
@@ -57,6 +86,14 @@ func DeleteURL(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// @Summary Получить список URL пользователем
+// @Description Возвращает список URL, принадлежащих пользователю
+// @Accept json
+// @Produce json
+// @Success 200 {object} api.Response "Успешное получение"
+// @Failure 400 {object} api.Response "Некорректные данные"
+// @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
+// @Router /api/urls [get]
 func GetMyURLs(c echo.Context) error {
 	userID := GetUserID(c)
 	page := GetPage(c)
@@ -68,6 +105,15 @@ func GetMyURLs(c echo.Context) error {
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: urls})
 }
 
+// @Summary Получить количество кликов по URL
+// @Description Возвращает количество кликов по URL
+// @Accept json
+// @Produce json
+// @Param shortCode path string true "Короткий код URL"
+// @Success 200 {object} api.Response "Успешное получение"
+// @Failure 400 {object} api.Response "Некорректные данные"
+// @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
+// @Router /api/clicks/{shortCode} [get]
 func GetURLClicks(c echo.Context) error {
 	userID := GetUserID(c)
 	shortCode := c.Param("shortCode")

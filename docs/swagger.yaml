@@ -8,6 +8,18 @@ definitions:
       msg:
         type: string
     type: object
+  urls.URLDTO:
+    properties:
+      originalURL:
+        type: string
+      shortCode:
+        maxLength: 32
+        minLength: 2
+        type: string
+    required:
+    - originalURL
+    - shortCode
+    type: object
   users.RegenerateCodeDTO:
     properties:
       email:
@@ -97,6 +109,33 @@ info:
   title: URL Shortener
   version: "1.1"
 paths:
+  /_/{shortCode}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает URL по короткому коду
+      parameters:
+      - description: Короткий код URL
+        in: path
+        name: shortCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное получение
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Получить URL
   /api/account:
     get:
       consumes:
@@ -145,6 +184,33 @@ paths:
           schema:
             $ref: '#/definitions/api.Response'
       summary: Обновление аккаунта
+  /api/clicks/{shortCode}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает количество кликов по URL
+      parameters:
+      - description: Короткий код URL
+        in: path
+        name: shortCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное получение
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Получить количество кликов по URL
   /api/login:
     post:
       consumes:
@@ -285,6 +351,81 @@ paths:
           schema:
             $ref: '#/definitions/api.Response'
       summary: Подтверждение сброса пароля
+  /api/urls:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список URL, принадлежащих пользователю
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное получение
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Получить список URL пользователем
+    post:
+      consumes:
+      - application/json
+      description: Сохраняет URL в базе данных
+      parameters:
+      - description: URL DTO
+        in: body
+        name: url
+        required: true
+        schema:
+          $ref: '#/definitions/urls.URLDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное сохранение
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Сохранить URL
+  /api/urls/{shortCode}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет URL из базы данных
+      parameters:
+      - description: Короткий код URL
+        in: path
+        name: shortCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешное удаление
+          schema:
+            $ref: '#/definitions/api.Response'
+        "400":
+          description: Некорректные данные
+          schema:
+            $ref: '#/definitions/api.Response'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.Response'
+      summary: Удалить URL
   /api/verification:
     post:
       consumes:
