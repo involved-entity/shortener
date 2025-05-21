@@ -30,6 +30,7 @@ func Run(config *Config) {
 
 	e.POST("/api/register", users.Register)
 	e.POST("/api/login", users.Login(config.TTL, config.SECRET))
+	e.POST("/api/verification", users.ActivateAccount)
 
 	e.GET("/_/:shortCode", urls.GetURL)
 
