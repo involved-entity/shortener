@@ -19,9 +19,6 @@ func main() {
 	log.Info("Starting shortener service", "env", config.Env)
 
 	database.Init(config.DSN)
-	connection := database.GetDB()
-
-	log.Info("Database connection", "connection", connection)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
