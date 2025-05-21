@@ -54,6 +54,10 @@ type ResetPasswordConfirmDTO struct {
 	Password string `json:"password"`
 }
 
+type UpdateAccountDTO struct {
+	Email string `json:"email"`
+}
+
 func Register(c echo.Context) error {
 	dto := UserDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
@@ -138,8 +142,8 @@ func ActivateAccount(c echo.Context) error {
 	}
 
 	db := database.GetDB()
-	r := Repository{db: db}
-	if err := r.VerificateUser(dto.ID); err != nil {
+	r := Repository{db: db, UserID: dto.ID}
+	if err := r.VerificateUser(); err != nil {
 		log.Println("Error with database", err)
 		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
@@ -184,8 +188,8 @@ func ResetPasswordConfirm(c echo.Context) error {
 	}
 
 	db := database.GetDB()
-	r := Repository{db: db}
-	if err := r.ChangeUserPassword(dto.ID, string(hashedPassword)); err != nil {
+	r := Repository{db: db, UserID: dto.ID}
+	if err := r.ChangeUserPassword(string(hashedPassword)); err != nil {
 		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 
@@ -199,6 +203,21 @@ func GetMe(c echo.Context) error {
 	user, err := r.GetUser(UserInfo{ID: userID})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, api.Response{Msg: "User not found"})
+	}
+	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
+}
+
+func UpdateAccount(c echo.Context) error {
+	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+	dto := UpdateAccountDTO{}
+	if err := api.DecodeRequest(c, &dto); err != nil {
+		return err
+	}
+	db := database.GetDB()
+	r := Repository{db: db, UserID: userID}
+	user, err := r.UpdateAccount(dto.Email)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
 }

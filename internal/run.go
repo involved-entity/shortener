@@ -42,6 +42,7 @@ func Run(config *conf.Config) {
 	)}))
 
 	authProtected.GET("/api/account", users.GetMe)
+	authProtected.PATCH("/api/account", users.UpdateAccount)
 
 	authProtected.GET("/api/urls", urls.GetMyURLs)
 	authProtected.POST("/api/urls", urls.SaveURL)
