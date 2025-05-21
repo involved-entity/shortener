@@ -2,113 +2,88 @@ package users
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"shortener/internal/api"
 	conf "shortener/internal/config"
-	"shortener/internal/database"
-	"shortener/internal/redis"
-	testutils "shortener/test_utils"
-	"strings"
+	testUtils "shortener/test_utils"
 	"testing"
 
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 var JWT string
 
 func TestMain(m *testing.M) {
-	rClient := testutils.InitTest()
+	rClient := testUtils.InitTest()
 
 	exitCode := m.Run()
 
-	rClient.Close()
-	conn := database.GetDB()
-	tables := []string{
-		"users",
-		"urls",
-		"clicks",
-	}
-
-	query := "DROP TABLE IF EXISTS " + strings.Join(tables, ", ") + " CASCADE;"
-	err := conn.Exec(query).Error
-	if err != nil {
-		log.Fatalf("Ошибка при очистке базы данных: %v", err)
-	}
-
-	os.Exit(exitCode)
+	testUtils.ExitTest(rClient, exitCode)
 }
 
 func TestRegister(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/register", bytes.NewBuffer([]byte(`{"username": "testu", "email": "test@example.com", "password": "12345678"}`)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodPost,
+		Url:            "/api/register",
+		Data:           bytes.NewBuffer([]byte(`{"username": "testu", "email": "test@example.com", "password": "12345678"}`)),
+		ExpectedStatus: http.StatusOK,
+		Handler:        Register,
+		T:              t,
+	}
 
-	err := Register(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	rec := basicTest.Execute()
 
 	var response api.Response
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
 	assert.NoError(t, err)
 }
 
 func TestActivateAccountInvalidCode(t *testing.T) {
-	e := echo.New()
-	e.POST("/api/verification", ActivateAccount)
-	req := httptest.NewRequest(http.MethodPost, "/api/verification", bytes.NewBuffer([]byte(`{
-		"id": 1,
-		"code": "00000"
-	}`)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodPost,
+		Url:            "/api/verification",
+		Data:           bytes.NewBuffer([]byte(`{"id": 1, "code": "00000"}`)),
+		ExpectedStatus: http.StatusBadRequest,
+		Handler:        ActivateAccount,
+		T:              t,
 
-	e.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+		ServeHTTPMode: true,
+	}
+
+	basicTest.Execute()
 }
 
 func TestActivateAccount(t *testing.T) {
-	e := echo.New()
-	redisClient := redis.GetClient()
-	config := conf.GetConfig()
-	otp, err := redisClient.Get(context.Background(), config.OTP.RedisName+":1").Result()
-	if err != nil {
-		return
-	}
-	req := httptest.NewRequest(http.MethodPost, "/api/verification", bytes.NewBuffer([]byte(fmt.Sprintf(`{
-		"id": 1,
-		"code": "%v"
-	}`, otp))))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	otp := testUtils.GetRedisVarForTestUser(conf.GetConfig().OTP.RedisName)
 
-	err = ActivateAccount(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodPost,
+		Url:            "/api/verification",
+		Data:           bytes.NewBuffer([]byte(fmt.Sprintf(`{"id": 1, "code": "%v"}`, otp))),
+		ExpectedStatus: http.StatusAccepted,
+		Handler:        ActivateAccount,
+		T:              t,
+	}
+
+	basicTest.Execute()
 }
 
 func TestLogin(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/login", bytes.NewBuffer([]byte(`{"username": "testu", "password": "12345678"}`)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodPost,
+		Url:            "/api/login",
+		Data:           bytes.NewBuffer([]byte(`{"username": "testu", "password": "12345678"}`)),
+		ExpectedStatus: http.StatusOK,
+		Handler:        Login,
+		T:              t,
+	}
 
-	err := Login(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	rec := basicTest.Execute()
 
 	var response map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
 	assert.NoError(t, err)
 
 	data, ok := response["data"].(map[string]interface{})
@@ -121,82 +96,78 @@ func TestLogin(t *testing.T) {
 }
 
 func TestResetPassword(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/reset-password", bytes.NewBuffer([]byte(`{"username": "testu"}`)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodPost,
+		Url:            "/api/reset-password",
+		Data:           bytes.NewBuffer([]byte(`{"username": "testu"}`)),
+		ExpectedStatus: http.StatusAccepted,
+		Handler:        ResetPassword,
+		T:              t,
+	}
 
-	err := ResetPassword(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusAccepted, rec.Code)
+	basicTest.Execute()
 }
 
 func TestResetPasswordConfirmInvalidToken(t *testing.T) {
-	e := echo.New()
-	e.POST("/api/reset-password-confirm", ResetPasswordConfirm)
-	req := httptest.NewRequest(http.MethodPost, "/api/reset-password-confirm", bytes.NewBuffer([]byte(`{
-		"id": 1,
-		"token": "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklz",
-		"password": "new-password"
-	}`)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
+	basicTest := testUtils.BasicTest{
+		Method: http.MethodPost,
+		Url:    "/api/reset-password-confirm",
+		Data: bytes.NewBuffer([]byte(`{
+			"id": 1,
+			"token": "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklz",
+			"password": "new-password"
+		}`)),
+		ExpectedStatus: http.StatusBadRequest,
+		Handler:        ResetPasswordConfirm,
+		T:              t,
 
-	e.ServeHTTP(rec, req)
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+		ServeHTTPMode: true,
+	}
+
+	basicTest.Execute()
 }
 
 func TestResetPasswordConfirm(t *testing.T) {
-	e := echo.New()
-	redisClient := redis.GetClient()
-	config := conf.GetConfig()
-	token, err := redisClient.Get(context.Background(), config.ResetToken.RedisName+":1").Result()
-	if err != nil {
-		return
-	}
-	req := httptest.NewRequest(http.MethodPost, "/api/reset-password-confirm", bytes.NewBuffer([]byte(fmt.Sprintf(`{
-		"id": 1,
-		"token": "%v",
-		"password": "12345678"
-	}`, token))))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	token := testUtils.GetRedisVarForTestUser(conf.GetConfig().ResetToken.RedisName)
 
-	err = ResetPasswordConfirm(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodPost,
+		Url:            "/api/reset-password-confirm",
+		Data:           bytes.NewBuffer([]byte(fmt.Sprintf(`{"id": 1, "token": "%v", "password": "12345678"}`, token))),
+		ExpectedStatus: http.StatusOK,
+		Handler:        ResetPasswordConfirm,
+		T:              t,
+	}
+
+	basicTest.Execute()
 }
 
 func TestGetMe(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/account", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodGet,
+		Url:            "/api/account",
+		Data:           &bytes.Buffer{},
+		ExpectedStatus: http.StatusOK,
+		Handler:        GetMe,
+		T:              t,
 
-	parsedToken := testutils.GetJWTForTest(t, JWT)
+		JWT: JWT,
+	}
 
-	c.Set("user", parsedToken)
-
-	err := GetMe(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	basicTest.Execute()
 }
 
 func TestUpdateAccount(t *testing.T) {
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodPatch, "/api/account", bytes.NewBuffer([]byte(`{"email": "newemail@example.com"}`)))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	basicTest := testUtils.BasicTest{
+		Method:         http.MethodPatch,
+		Url:            "/api/account",
+		Data:           bytes.NewBuffer([]byte(`{"email": "newemail@example.com"}`)),
+		ExpectedStatus: http.StatusOK,
+		Handler:        UpdateAccount,
+		T:              t,
 
-	parsedToken := testutils.GetJWTForTest(t, JWT)
+		JWT: JWT,
+	}
 
-	c.Set("user", parsedToken)
-
-	err := UpdateAccount(c)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
+	basicTest.Execute()
 }
