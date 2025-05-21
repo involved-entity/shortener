@@ -49,11 +49,10 @@ func GetURL(c echo.Context) error {
 }
 
 func DeleteURL(c echo.Context) error {
-	// user := c.Get("user").(*jwt.Token)
-	// claims := user.Claims.(jwt.MapClaims)
+	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
 	shortCode := c.Param("shortCode")
 	db := database.GetDB()
-	r := Repository{db: db}
+	r := Repository{db: db, UserId: userID}
 	err := r.DeleteURL(shortCode)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
