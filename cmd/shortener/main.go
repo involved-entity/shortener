@@ -25,4 +25,6 @@ func main() {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.RequestID)
 	router.Use(customMW.NewLogMiddleware(log))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
 }
