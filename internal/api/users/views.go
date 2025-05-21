@@ -3,7 +3,6 @@ package users
 import (
 	"net/http"
 	api "shortener/internal/api"
-	"shortener/internal/api/urls"
 	conf "shortener/internal/config"
 	"shortener/internal/database"
 	"time"
@@ -255,7 +254,7 @@ func ResetPasswordConfirm(c echo.Context) error {
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/account [get]
 func GetMe(c echo.Context) error {
-	userID := urls.GetUserID(c)
+	userID := api.GetUserID(c)
 	r := Repository{db: database.GetDB()}
 	user, err := r.GetUser(UserInfo{ID: userID})
 	if err != nil {
@@ -274,7 +273,7 @@ func GetMe(c echo.Context) error {
 // @Failure 500 {object} api.Response "Внутренняя ошибка сервера"
 // @Router /api/account [patch]
 func UpdateAccount(c echo.Context) error {
-	userID := urls.GetUserID(c)
+	userID := api.GetUserID(c)
 	dto := UpdateAccountDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
 		return err
