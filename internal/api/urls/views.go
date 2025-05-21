@@ -53,9 +53,19 @@ func DeleteURL(c echo.Context) error {
 	shortCode := c.Param("shortCode")
 	db := database.GetDB()
 	r := Repository{db: db, UserId: userID}
-	err := r.DeleteURL(shortCode)
-	if err != nil {
+	if err := r.DeleteURL(shortCode); err != nil {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
 	}
 	return c.NoContent(http.StatusNoContent)
+}
+
+func GetMyURLs(c echo.Context) error {
+	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+	db := database.GetDB()
+	r := Repository{db: db, UserId: userID}
+	urls, err := r.GetUserURLs()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+	}
+	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: urls})
 }
