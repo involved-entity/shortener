@@ -26,3 +26,13 @@ func SaveURL(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: url})
 }
+
+func GetURL(c echo.Context) error {
+	shortCode := c.Param("shortCode")
+	db := database.GetDB()
+	url, err := database.GetURL(db, shortCode)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "shortcode is not defined")
+	}
+	return c.Redirect(http.StatusPermanentRedirect, url)
+}
