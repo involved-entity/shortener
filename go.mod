@@ -17,7 +17,10 @@ require (
 
 replace github.com/redis/go-redis/v9 => github.com/go-redis/redis/v9 v9.0.0-rc.2
 
-require github.com/RichardKnop/machinery/v2 v2.0.13
+require (
+	github.com/RichardKnop/machinery/v2 v2.0.13
+	github.com/go-redis/redis/v9 v9.0.0-00010101000000-000000000000
+)
 
 require (
 	cloud.google.com/go v0.116.0 // indirect
@@ -28,6 +31,8 @@ require (
 	cloud.google.com/go/pubsub v1.45.1 // indirect
 	github.com/RichardKnop/logging v0.0.0-20190827224416-1a693bdd4fae // indirect
 	github.com/aws/aws-sdk-go v1.37.16 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect

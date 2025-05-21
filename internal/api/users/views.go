@@ -1,11 +1,16 @@
 package users
 
 import (
+	"context"
 	"net/http"
-	"shortener/internal/api"
+	api "shortener/internal/api"
 	"shortener/internal/database"
+	"shortener/internal/machinery"
+	"shortener/internal/redis"
+	"strconv"
 	"time"
 
+	machineryTasks "github.com/RichardKnop/machinery/v2/tasks"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -49,6 +54,26 @@ func Register(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "Username or email is already exists"})
 	}
+
+	tokenOTP, err := GenerateSecureToken()
+	if err != nil {
+		return c.JSON(
+			http.StatusInternalServerError,
+			api.Response{Msg: "Failed to generate token to verification. Please try again"},
+		)
+	}
+	redisClient := redis.GetClient()
+	redisClient.Set(context.Background(), "otp:"+strconv.Itoa(int(user.ID)), tokenOTP, time.Minute*5)
+
+	machineryServer := machinery.GetServer()
+	signature := &machineryTasks.Signature{
+		Name: "send_email",
+		Args: []machineryTasks.Arg{
+			{Name: "email", Type: "string", Value: user.Email},
+			{Name: "code", Type: "string", Value: tokenOTP},
+		},
+	}
+	machineryServer.SendTaskWithContext(context.Background(), signature)
 
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
 }

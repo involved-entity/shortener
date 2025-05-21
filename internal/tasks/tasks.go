@@ -1,19 +1,67 @@
 package tasks
 
 import (
+	"bytes"
+	"errors"
 	"log"
+	"net/smtp"
+	"text/template"
 )
 
-type EmailPayload struct {
-	Email string `json:"email"`
-	Code  string `json:"code"`
-}
+func SendVerificationEmail(configEmail string, configPassword string) func(email string, code string) error {
+	return func(email string, code string) error {
+		log.Printf("Sending email to %s with code: %v", email, code)
 
-func SendVerificationEmail(payload EmailPayload) error {
-	log.Printf("Sending email to %s with code: %s", payload.Email, payload.Code)
+		smtpHost := "smtp.gmail.com"
+		smtpPort := "587"
+		smtpUsername := configEmail
+		smtpPassword := configPassword
 
-	// err := smtp.SendMail(...)
-	// if err != nil { return err }
+		auth := smtp.PlainAuth("", smtpUsername, smtpPassword, smtpHost)
 
-	return nil
+		emailTemplate := `From: {{.From}}
+		To: {{.To}}
+		Subject: Shortener Email Verification
+
+		Hello,
+
+		Please use the following code to verify your email address: {{.Code}}
+
+		If you didn't request this, please ignore this email.
+
+		Best regards,
+		Shortener Team
+	`
+
+		data := struct {
+			From string
+			To   string
+			Code string
+		}{
+			From: smtpUsername,
+			To:   email,
+			Code: code,
+		}
+
+		var body bytes.Buffer
+		t := template.Must(template.New("email").Parse(emailTemplate))
+		if err := t.Execute(&body, data); err != nil {
+			log.Printf("error generating email: %v", err)
+			return errors.New("error generating email")
+		}
+
+		err := smtp.SendMail(
+			smtpHost+":"+smtpPort,
+			auth,
+			smtpUsername,
+			[]string{email},
+			body.Bytes(),
+		)
+		if err != nil {
+			log.Printf("error sending email: %v", err)
+			return errors.New("error sending email")
+		}
+
+		return nil
+	}
 }

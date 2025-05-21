@@ -6,19 +6,24 @@ import (
 	"shortener/internal/api/users"
 	"shortener/internal/database"
 	"shortener/internal/machinery"
+	"shortener/internal/redis"
 
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func Run(config Config) {
+func Run(config *Config) {
 	log := SetupLogger(config.Env)
 
-	log.Info("Starting shortener service", "env", config.Env)
-
 	database.Init(config.DSN)
-	machinery.Init()
+	machinery.Init(config.Mail.Email, config.Mail.Password)
+	redis.Init()
+	redisClient := redis.GetClient()
+
+	defer redisClient.Close()
+
+	log.Info("Starting shortener service", "env", config.Env)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
