@@ -26,6 +26,12 @@ type TokenDTO struct {
 	Token string `json:"token"`
 }
 
+type JWTData struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
 func Register(c echo.Context) error {
 	dto := UserDTO{}
 	if err := api.DecodeRequest(c, &dto); err != nil {
@@ -66,10 +72,10 @@ func Login(ttl int, secret string) func(c echo.Context) error {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub": map[string]any{
-				"id":       user.ID,
-				"username": user.Username,
-				"email":    user.Email,
+			"sub": JWTData{
+				ID:       user.ID,
+				Username: user.Username,
+				Email:    user.Email,
 			},
 			"exp": time.Now().Add(time.Minute * time.Duration(ttl)).Unix(),
 		})

@@ -16,11 +16,17 @@ type URLRepository interface {
 }
 
 type Repository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	UserId int
 }
 
 func (r Repository) SaveURL(originalURL string, shortCode string) (database.URL, error) {
-	url := database.URL{OriginalURL: originalURL, ShortCode: shortCode}
+	var userID *uint
+	if r.UserId != 0 {
+		id := uint(r.UserId)
+		userID = &id
+	}
+	url := database.URL{OriginalURL: originalURL, ShortCode: shortCode, UserID: userID}
 	if err := r.db.Create(&url).Error; err != nil {
 		log.Println("Error when saving a url", originalURL, shortCode)
 		return database.URL{}, err
