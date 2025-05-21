@@ -20,7 +20,8 @@ func SaveURL(c echo.Context) error {
 		return err
 	}
 	db := database.GetDB()
-	url, err := database.SaveURL(db, dto.OriginalURL, dto.ShortCode)
+	r := Repository{db: db}
+	url, err := r.SaveURL(dto.OriginalURL, dto.ShortCode)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode already used"})
 	}
@@ -30,18 +31,20 @@ func SaveURL(c echo.Context) error {
 func GetURL(c echo.Context) error {
 	shortCode := c.Param("shortCode")
 	db := database.GetDB()
-	url, id, err := database.GetURL(db, shortCode)
+	r := Repository{db: db}
+	url, id, err := r.GetURL(shortCode)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "shortcode is not defined")
 	}
-	database.RegisterClick(db, id, c.RealIP())
+	r.RegisterClick(id, c.RealIP())
 	return c.Redirect(http.StatusPermanentRedirect, url)
 }
 
 func DeleteURL(c echo.Context) error {
 	shortCode := c.Param("shortCode")
 	db := database.GetDB()
-	err := database.DeleteURL(db, shortCode)
+	r := Repository{db: db}
+	err := r.DeleteURL(shortCode)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
 	}
