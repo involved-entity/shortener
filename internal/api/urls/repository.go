@@ -45,8 +45,8 @@ func (r Repository) DeleteURL(shortCode string) error {
 	return nil
 }
 
-func (r Repository) RegisterClick(id uint, ip string) error {
-	click := database.Click{URLID: id, IPAddress: ip}
+func (r Repository) RegisterClick(id uint, ip string, referer string, langCode string, browser string) error {
+	click := database.Click{URLID: id, IPAddress: ip, Referer: &referer, LangCode: &langCode, Browser: &browser}
 	if err := r.db.Create(&click).Error; err != nil {
 		log.Println("Error when register a click", click)
 		return err

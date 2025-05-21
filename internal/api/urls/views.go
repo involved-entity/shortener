@@ -4,6 +4,8 @@ import (
 	"shortener/internal/api"
 	"shortener/internal/database"
 
+	"strings"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
@@ -38,13 +40,30 @@ func SaveURL(c echo.Context) error {
 
 func GetURL(c echo.Context) error {
 	shortCode := c.Param("shortCode")
+
+	lang := c.Request().Header.Get("Accept-Language")
+	ua := c.Request().UserAgent()
+	referer := c.Request().Header.Get("Referer")
+
+	langParts := strings.Split(lang, ";")
+	langCode := langParts[0]
+
+	uaParts := strings.Split(ua, " ")
+	browser := ""
+	for _, part := range uaParts {
+		if strings.Contains(part, "Chrome") || strings.Contains(part, "Firefox") || strings.Contains(part, "Safari") || strings.Contains(part, "Edge") {
+			browser = part
+			break
+		}
+	}
+
 	db := database.GetDB()
 	r := Repository{db: db}
 	url, id, err := r.GetURL(shortCode)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "shortcode is not defined")
 	}
-	r.RegisterClick(id, c.RealIP())
+	r.RegisterClick(id, c.RealIP(), referer, langCode, browser)
 	return c.Redirect(http.StatusPermanentRedirect, url)
 }
 
