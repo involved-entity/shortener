@@ -15,13 +15,13 @@ type URL struct {
 }
 
 type Click struct {
-	ID        uint   `gorm:"primaryKey"`
-	URLID     uint   `gorm:"not null"`
-	URL       URL    `gorm:"foreignKey:URLID;constraint:OnDelete:CASCADE"`
-	IPAddress string `gorm:"not null"`
-	Referer   *string
-	LangCode  *string
-	Browser   *string
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	URLID     uint      `gorm:"not null" json:"url_id"`
+	URL       URL       `gorm:"foreignKey:URLID;constraint:OnDelete:CASCADE" json:"url"`
+	IPAddress string    `gorm:"not null" json:"ip_address"`
+	Referer   *string   `json:"referer"`
+	LangCode  *string   `json:"lang_code"`
+	Browser   *string   `json:"browser"`
 	ClickedAt time.Time `gorm:"autoCreateTime"`
 }
 
