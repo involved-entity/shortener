@@ -8,7 +8,7 @@ import (
 	"shortener/internal/database"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -87,7 +87,7 @@ func Login(c echo.Context) error {
 
 	db := database.GetDB()
 	r := Repository{db: db}
-	user, err := r.GetUser(dto.Username)
+	user, err := r.GetUser(UserInfo{Username: dto.Username})
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, api.Response{Msg: "User is not found or not verified"})
 	}
@@ -155,7 +155,7 @@ func ResetPassword(c echo.Context) error {
 
 	db := database.GetDB()
 	r := Repository{db: db}
-	user, err := r.GetUser(dto.Username)
+	user, err := r.GetUser(UserInfo{Username: dto.Username})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, api.Response{Msg: "User not found"})
 	}
@@ -190,4 +190,15 @@ func ResetPasswordConfirm(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, api.Response{Msg: "success"})
+}
+
+func GetMe(c echo.Context) error {
+	userID := int(c.Get("user").(*jwt.Token).Claims.(jwt.MapClaims)["sub"].(map[string]interface{})["id"].(float64))
+	db := database.GetDB()
+	r := Repository{db: db}
+	user, err := r.GetUser(UserInfo{ID: userID})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, api.Response{Msg: "User not found"})
+	}
+	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: user})
 }
