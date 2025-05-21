@@ -23,3 +23,12 @@ func (r Repository) SaveUser(username string, email string, password string) (da
 	}
 	return user, nil
 }
+
+func (r Repository) GetUser(username string) (database.User, error) {
+	var user database.User
+	if err := r.db.Where("username = ? AND is_verified = true", username).First(&user).Error; err != nil {
+		log.Println("Error when get a user", username, err)
+		return database.User{}, err
+	}
+	return user, nil
+}

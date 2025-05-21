@@ -26,6 +26,7 @@ func main() {
 	e.Use(middleware.Logger())
 
 	e.POST("/api/register", users.Register)
+	e.POST("/api/login", users.Login(config.TTL, config.SECRET))
 
 	e.GET("/_/:shortCode", urls.GetURL)
 	e.POST("/api/urls", urls.SaveURL)
