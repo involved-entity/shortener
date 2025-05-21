@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"net/url"
 	api "shortener/internal/api"
 	conf "shortener/internal/config"
 	"shortener/internal/machinery"
@@ -18,25 +19,23 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func GenerateSecureToken() (string, error) {
-	const digits = "0123456789"
-	const length = 5
+func generateSecureToken(elements string, length int) (string, error) {
 	token := make([]byte, length)
 
 	for i := range token {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(elements))))
 		if err != nil {
 			log.Printf("failed to generate token: %v", err)
 			return "", errors.New("failed to generate token")
 		}
-		token[i] = digits[num.Int64()]
+		token[i] = elements[num.Int64()]
 	}
 
 	return string(token), nil
 }
 
 func CreateAndSendToken(c echo.Context, id uint, email string) error {
-	tokenOTP, err := GenerateSecureToken()
+	tokenOTP, err := generateSecureToken("0123456789", 5)
 	if err != nil {
 		return c.JSON(
 			http.StatusInternalServerError,
@@ -58,6 +57,52 @@ func CreateAndSendToken(c echo.Context, id uint, email string) error {
 		Args: []machineryTasks.Arg{
 			{Name: "email", Type: "string", Value: email},
 			{Name: "code", Type: "string", Value: tokenOTP},
+		},
+	}
+	machineryServer.SendTaskWithContext(context.Background(), signature)
+
+	return nil
+}
+
+func CreateAndSendResetPasswordLink(c echo.Context, id uint, email string) error {
+	token, err := generateSecureToken("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 64)
+	if err != nil {
+		return c.JSON(
+			http.StatusInternalServerError,
+			api.Response{Msg: "Failed to generate token to reset password. Please try again"},
+		)
+	}
+
+	redisClient := redis.GetClient()
+	config := conf.GetConfig()
+	redisClient.Set(
+		context.Background(),
+		config.ResetToken.RedisName+":"+strconv.Itoa(int(id)),
+		token,
+		time.Minute*time.Duration(config.ResetToken.RT_TTL),
+	)
+
+	baseURL, err := url.Parse(config.ResetToken.FrontendUrl)
+	if err != nil {
+		return c.JSON(
+			http.StatusInternalServerError,
+			api.Response{Msg: "Internal server error. Please try again"},
+		)
+	}
+
+	query := url.Values{
+		"token": {token},
+		"id":    {strconv.Itoa(int(id))},
+	}
+
+	baseURL.RawQuery = query.Encode()
+
+	machineryServer := machinery.GetServer()
+	signature := &machineryTasks.Signature{
+		Name: "reset_password",
+		Args: []machineryTasks.Arg{
+			{Name: "email", Type: "string", Value: email},
+			{Name: "link", Type: "string", Value: baseURL.String()},
 		},
 	}
 	machineryServer.SendTaskWithContext(context.Background(), signature)

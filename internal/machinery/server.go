@@ -33,7 +33,11 @@ func New(configEmail string, configPassword string) *machinery.Server {
 
 	server := machinery.NewServer(cnf, broker, backend, lock)
 
-	err := server.RegisterTask("send_email", tasks.SendVerificationEmail(configEmail, configPassword))
+	t := make(map[string]interface{})
+	t["send_email"] = tasks.SendVerificationEmail(configEmail, configPassword)
+	t["reset_password"] = tasks.SendResetPasswordEmail(configEmail, configPassword)
+	err := server.RegisterTasks(t)
+
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)

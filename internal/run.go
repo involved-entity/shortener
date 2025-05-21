@@ -33,6 +33,7 @@ func Run(config *conf.Config) {
 	e.POST("/api/login", users.Login)
 	e.POST("/api/verification", users.ActivateAccount)
 	e.POST("/api/regenerate-code", users.RegenerateCode)
+	e.POST("/api/reset-password", users.ResetPassword)
 
 	e.GET("/_/:shortCode", urls.GetURL)
 
