@@ -13,8 +13,8 @@ import (
 )
 
 type URLDTO struct {
-	OriginalURL string `json:"originalURL"`
-	ShortCode   string `json:"shortCode"`
+	OriginalURL string `json:"originalURL" validate:"required,url"`
+	ShortCode   string `json:"shortCode" validate:"required,min=2,max=32"`
 }
 
 func SaveURL(c echo.Context) error {
@@ -33,7 +33,7 @@ func SaveURL(c echo.Context) error {
 	r := Repository{db: db, UserId: userID}
 	url, err := r.SaveURL(dto.OriginalURL, dto.ShortCode)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode already used"})
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "shortcode already used"})
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: url})
 }
@@ -61,7 +61,7 @@ func GetURL(c echo.Context) error {
 	r := Repository{db: db}
 	url, id, err := r.GetURL(shortCode)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "shortcode is not defined")
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
 	}
 	r.RegisterClick(id, c.RealIP(), referer, langCode, browser)
 	return c.Redirect(http.StatusPermanentRedirect, url)
@@ -73,7 +73,7 @@ func DeleteURL(c echo.Context) error {
 	db := database.GetDB()
 	r := Repository{db: db, UserId: userID}
 	if err := r.DeleteURL(shortCode); err != nil {
-		return c.JSON(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
+		return echo.NewHTTPError(http.StatusBadRequest, api.Response{Msg: "shortcode is not defined"})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -84,7 +84,7 @@ func GetMyURLs(c echo.Context) error {
 	r := Repository{db: db, UserId: userID}
 	urls, err := r.GetUserURLs()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: urls})
 }
@@ -96,7 +96,7 @@ func GetURLClicks(c echo.Context) error {
 	r := Repository{db: db, UserId: userID}
 	clicks, err := r.GetURLClicks(shortCode)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
+		return echo.NewHTTPError(http.StatusInternalServerError, api.Response{Msg: "Internal server error. Please try again"})
 	}
 	return c.JSON(http.StatusOK, api.Response{Msg: "success", Data: clicks})
 }
