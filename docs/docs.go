@@ -23,7 +23,7 @@ const docTemplate = `{
     "paths": {
         "/_/{shortCode}": {
             "get": {
-                "description": "Возвращает URL по короткому коду",
+                "description": "Редеректит на URL по короткому коду",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,14 +41,14 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Успешное получение",
+                    "308": {
+                        "description": "Редирект",
                         "schema": {
                             "$ref": "#/definitions/api.Response"
                         }
                     },
                     "400": {
-                        "description": "Некорректные данные",
+                        "description": "Короткий код не найден",
                         "schema": {
                             "$ref": "#/definitions/api.Response"
                         }
@@ -137,14 +137,14 @@ const docTemplate = `{
         },
         "/api/clicks/{shortCode}": {
             "get": {
-                "description": "Возвращает количество кликов по URL",
+                "description": "Возвращает данные о кликах на URL (браузер, IP, язык браузера, источник перехода)",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Получить количество кликов по URL",
+                "summary": "Получить клики по URL",
                 "parameters": [
                     {
                         "type": "string",
@@ -157,12 +157,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Успешное получение",
-                        "schema": {
-                            "$ref": "#/definitions/api.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректные данные",
                         "schema": {
                             "$ref": "#/definitions/api.Response"
                         }
@@ -400,16 +394,10 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Получить список URL пользователем",
+                "summary": "Получить список URL пользователя",
                 "responses": {
                     "200": {
                         "description": "Успешное получение",
-                        "schema": {
-                            "$ref": "#/definitions/api.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Некорректные данные",
                         "schema": {
                             "$ref": "#/definitions/api.Response"
                         }
@@ -450,7 +438,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректные данные",
+                        "description": "Короткий код занят",
                         "schema": {
                             "$ref": "#/definitions/api.Response"
                         }
@@ -491,7 +479,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректные данные",
+                        "description": "Короткий код не найден",
                         "schema": {
                             "$ref": "#/definitions/api.Response"
                         }

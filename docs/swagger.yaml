@@ -113,7 +113,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Возвращает URL по короткому коду
+      description: Редеректит на URL по короткому коду
       parameters:
       - description: Короткий код URL
         in: path
@@ -123,12 +123,12 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Успешное получение
+        "308":
+          description: Редирект
           schema:
             $ref: '#/definitions/api.Response'
         "400":
-          description: Некорректные данные
+          description: Короткий код не найден
           schema:
             $ref: '#/definitions/api.Response'
         "500":
@@ -188,7 +188,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Возвращает количество кликов по URL
+      description: Возвращает данные о кликах на URL (браузер, IP, язык браузера,
+        источник перехода)
       parameters:
       - description: Короткий код URL
         in: path
@@ -202,15 +203,11 @@ paths:
           description: Успешное получение
           schema:
             $ref: '#/definitions/api.Response'
-        "400":
-          description: Некорректные данные
-          schema:
-            $ref: '#/definitions/api.Response'
         "500":
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/api.Response'
-      summary: Получить количество кликов по URL
+      summary: Получить клики по URL
   /api/login:
     post:
       consumes:
@@ -363,15 +360,11 @@ paths:
           description: Успешное получение
           schema:
             $ref: '#/definitions/api.Response'
-        "400":
-          description: Некорректные данные
-          schema:
-            $ref: '#/definitions/api.Response'
         "500":
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/api.Response'
-      summary: Получить список URL пользователем
+      summary: Получить список URL пользователя
     post:
       consumes:
       - application/json
@@ -391,7 +384,7 @@ paths:
           schema:
             $ref: '#/definitions/api.Response'
         "400":
-          description: Некорректные данные
+          description: Короткий код занят
           schema:
             $ref: '#/definitions/api.Response'
         "500":
@@ -418,7 +411,7 @@ paths:
           schema:
             $ref: '#/definitions/api.Response'
         "400":
-          description: Некорректные данные
+          description: Короткий код не найден
           schema:
             $ref: '#/definitions/api.Response'
         "500":
