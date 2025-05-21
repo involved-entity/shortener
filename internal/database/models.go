@@ -5,11 +5,11 @@ import (
 )
 
 type URL struct {
-	ID          uint   `gorm:"primaryKey"`
-	OriginalURL string `gorm:"not null"`
-	ShortCode   string `gorm:"uniqueIndex;not null"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	OriginalURL string    `gorm:"not null" json:"originalURL"`
+	ShortCode   string    `gorm:"uniqueIndex;not null" json:"shortCode"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type Click struct {
