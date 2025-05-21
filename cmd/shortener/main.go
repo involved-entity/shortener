@@ -2,7 +2,11 @@ package main
 
 import (
 	"shortener/internal"
+	"shortener/internal/api/urls"
 	"shortener/internal/database"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -16,4 +20,11 @@ func main() {
 	connection := database.GetDB()
 
 	log.Info("Database connection", "connection", connection)
+
+	e := echo.New()
+	e.Use(middleware.Logger())
+
+	e.POST("/api/urls", urls.SaveURL)
+
+	e.Start(config.Address)
 }
